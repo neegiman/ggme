@@ -22,6 +22,7 @@
 
 WebKit의 Playwright 화면 캡처는 인라인 스타일 삽입 때문에 CSP에 차단됩니다. CSP를 유지하면서 WebKit 기능·DOM 레이아웃을 검사하고 픽셀 캡처는 Chromium에서 수행합니다.
 
-공개 배포 결과는 배포 후 이 문서에 기록합니다.
+GitHub Pages 공개 배포 성공: https://neegiman.github.io/ggme/ (HTTPS). 저장소: https://github.com/neegiman/ggme. GitHub Actions의 Game logic tests 및 pages build and deployment가 성공했습니다. 공개 주소에서 Chromium 통합 테스트를 다시 실행하여 3명·8명 전체 카드 흐름과 3~8명 전체 생성자 흐름이 통과했고 콘솔 오류·외부 요청은 0이었습니다.
 
 추가 검증: Chromium·WebKit 모두 4/5/6/7명으로 세 게임을 연속 진행하며 단독 최고 득표 동률 처리·결과·다음 게임·통산 기록을 확인했습니다. 인원 선택을 줄였다 늘려도 입력한 이름이 유지되고 새 그룹에서는 인원 선택이 유지됩니다. 최종 브라우저 콘솔 오류 0, 외부 요청 0입니다.
+
