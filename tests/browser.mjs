@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { scoreRound } from '../js/core.js';
 import { decodePayload, encodePayload } from '../js/links.js';
+import { decodeRaster } from './qr-helper.mjs';
 
 const require = createRequire(import.meta.url);
 const playwright = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -32,12 +33,12 @@ function watch(page) {
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   page.on('request', request => { if (new URL(request.url()).origin !== new URL(base).origin) externalRequests.push(request.url()); });
 }
-async function screenshot(page, name) {
+async function screenshot(page, name, fullPage = true) {
   // Playwright's WebKit screenshot helper injects "body {}" inline to synchronize
   // animations, which our CSP correctly blocks. Keep CSP enforced in every test;
   // use Chromium for pixel captures and WebKit for DOM/layout and full-flow QA.
   if (page.context().browser().browserType().name() === 'webkit') return;
-  await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, artifacts)), fullPage: true, caret: 'initial' });
+  await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, artifacts)), fullPage, caret: 'initial' });
 }
 async function assertLayout(page, label) {
   const result = await page.evaluate(() => {
@@ -73,8 +74,66 @@ async function create(page, game, count = 3) {
   await page.locator('#invite-0').waitFor();
 }
 async function begin(page) {
-  for (let i = 0, n = await page.locator('[data-delivered]').count(); i < n; i++) await page.locator(`[data-delivered="${i}"]`).check();
+  const n = Number(await page.locator('[data-invite-count]').getAttribute('data-invite-count'));
+  for (let i = 0; i < n; i++) {
+    await showInvite(page, i);
+    await page.locator(`[data-delivered="${i}"]`).check();
+    assert.equal(await page.locator('#invite-progress').innerText(), `${i + 1} / ${n}명 카드 확인 완료`);
+  }
   await page.locator('[data-action="start"]').click();
+}
+async function showInvite(page, seat) {
+  let current = Number(await page.locator('.invite-card').getAttribute('data-seat'));
+  while (current !== seat) {
+    await page.locator(`[data-action="invite-${current < seat ? 'next' : 'prev'}"]`).click();
+    current = Number(await page.locator('.invite-card').getAttribute('data-seat'));
+  }
+}
+async function scanQR(page, selector = '.invite-card .invite-qr') {
+  const raster = await page.locator(selector).evaluate(async svg => {
+    const clone = svg.cloneNode(true);
+    clone.removeAttribute('aria-label'); // Keep SVG ASCII for btoa; the visible label is tested separately.
+    const image = new Image();
+    const loaded = new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
+    image.src = `data:image/svg+xml;base64,${btoa(clone.outerHTML)}`;
+    await loaded;
+    const width = Math.round(svg.getBoundingClientRect().width * window.devicePixelRatio);
+    const edge = svg.viewBox.baseVal.width;
+    if (width % edge !== 0) throw new Error(`QR modules do not align with screen pixels: ${width}/${edge}`);
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = width;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0, width, width);
+    const rgba = ctx.getImageData(0, 0, width, width).data;
+    const gray = new Uint8Array(width * width);
+    for (let i = 0; i < gray.length; i++) gray[i] = rgba[i * 4];
+    const chunks = [];
+    for (let i = 0; i < gray.length; i += 8192) chunks.push(String.fromCharCode(...gray.subarray(i, i + 8192)));
+    return { width, height: width, gray: btoa(chunks.join('')) };
+  });
+  return decodeRaster(raster);
+}
+async function collectInviteLinks(page, scan = false) {
+  const count = Number(await page.locator('[data-invite-count]').getAttribute('data-invite-count'));
+  const links = [];
+  await showInvite(page, 0);
+  assert.equal(await page.locator('[data-action="invite-prev"]').isDisabled(), true);
+  for (let i = 0; i < count; i++) {
+    await showInvite(page, i);
+    assert.equal(await page.locator('.invite-card').count(), 1);
+    assert.equal(await page.locator('.link-field').count(), 1);
+    assert.equal(await page.locator('.invite-qr').count(), 1);
+    const url = await page.locator(`#invite-${i}`).inputValue();
+    const payload = decodePayload(new URL(url).hash);
+    assert.equal(payload.seat, i + 1);
+    assert.equal(await page.locator('#invite-name').innerText(), payload.recipient);
+    assert.equal(await page.locator('.invite-position').innerText(), `참가자 ${i + 1} / ${count}`);
+    if (scan) assert.equal(await scanQR(page), url, `Rendered QR for seat ${i + 1}`);
+    links.push(url);
+  }
+  assert.equal(await page.locator('[data-action="invite-next"]').isDisabled(), true);
+  await showInvite(page, 0);
+  return links;
 }
 async function vote(page, target) {
   for (let i = 0, n = await page.locator('[data-vote]').count(); i < n; i++) await page.locator(`#vote-${i}`).selectOption(String(i === target ? (target + 1) % n : target));
@@ -91,7 +150,7 @@ try {
       await desktop.close();
       for (const count of [3, 8]) for (const game of ['liar', 'spy', 'taboo']) {
         console.log(`  ${game} (${count} players): create → isolated cards → manual play → result → restore → next`);
-        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'ko-KR' });
+        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'ko-KR' });
         const page = await context.newPage(); watch(page); await page.clock.install(); await page.goto(base);
         if (engine === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         if (game === 'liar') {
@@ -106,9 +165,25 @@ try {
         await create(page, game, count);
         let state = await read(page);
         const firstId = state.session.round.id;
-        const links = await page.locator('.link-field').evaluateAll(els => els.map(el => el.value));
+        const links = await collectInviteLinks(page, true);
         assert.equal(new Set(links).size, count); await assertMobileLayouts(page, `${engine} ${game} ${count} invites`);
         links.forEach(url => assert.equal(new URL(url).pathname, '/ggme/card.html'));
+        assert.equal(await page.locator('[data-action="start"]').isDisabled(), true);
+        await page.locator('[data-action="qr-large"]').click();
+        assert.equal(await scanQR(page, 'dialog .invite-qr'), links[0]);
+        await assertMobileLayouts(page, `${engine} enlarged QR`);
+        if (game === 'taboo' && count === 8) await screenshot(page, `${engine}-qr-large-mobile`, false);
+        await page.locator('dialog [data-action="close-modal"]').last().click();
+        await showInvite(page, 1);
+        assert.equal(await page.locator('.invite-qr').count(), 1);
+        await showInvite(page, 0);
+        assert.ok((await read(page)).session.round.shared.every(checked => !checked));
+        await page.locator('[data-delivered="0"]').check();
+        await showInvite(page, 1); await showInvite(page, 0);
+        assert.equal(await page.locator('[data-delivered="0"]').isChecked(), true);
+        await page.reload();
+        assert.equal(await page.locator('[data-delivered="0"]').isChecked(), true);
+        await page.locator('[data-delivered="0"]').uncheck();
         assert.equal(await page.locator('[data-action="start"]').isDisabled(), true);
         await page.locator('[data-action="copy"]').first().click();
         if (await page.locator('dialog[open]').count()) await page.locator('dialog [data-action="close-modal"]').last().click();
@@ -116,6 +191,13 @@ try {
         await page.evaluate(() => { Object.defineProperty(navigator, 'share', { configurable: true, value: async data => { window.testSharedData = data; } }); });
         await page.locator('[data-action="share"]').first().click();
         assert.equal(await page.evaluate(() => window.testSharedData.url), links[0]);
+        await showInvite(page, count - 1);
+        await page.locator('[data-action="share"]').click();
+        assert.equal(await page.evaluate(() => window.testSharedData.url), links[count - 1]);
+        await page.locator('[data-action="copy"]').click();
+        if (await page.locator('dialog[open]').count()) await page.locator('dialog [data-action="close-modal"]').last().click();
+        if (engine === 'chromium') assert.equal(await page.evaluate(() => navigator.clipboard.readText()), links[count - 1]);
+        await showInvite(page, 0);
         if (game === 'liar') await screenshot(page, `${engine}-invites-mobile`);
         for (const [i, url] of links.entries()) {
           const p = decodePayload(new URL(url).hash);
@@ -187,7 +269,9 @@ try {
         await page.locator('dialog [data-action="close-modal"]').last().click();
         await page.locator('[data-action="next-round"]').click(); const next = await read(page);
         assert.notEqual(next.session.round.id, firstId); assert.equal(next.session.round.number, 2); assert.deepEqual(next.session.totals, totals);
-        const nextLinks = await page.locator('.link-field').evaluateAll(els => els.map(el => el.value));
+        assert.equal(await page.locator('.invite-card').getAttribute('data-seat'), '0');
+        assert.equal(await page.locator('#invite-progress').innerText(), `0 / ${count}명 카드 확인 완료`);
+        const nextLinks = await collectInviteLinks(page);
         nextLinks.forEach((link, i) => assert.notEqual(link, links[i]));
         if (game === 'spy') {
           await begin(page); await page.locator('[data-action="judge"]').click(); await page.locator('[data-draft="earlyGuess"]').check();
@@ -217,7 +301,7 @@ try {
         for (const game of ['liar', 'spy', 'taboo']) {
           const before = await read(page);
           assert.equal(before.session.round.playerCount, count);
-          const links = await page.locator('.link-field').evaluateAll(els => els.map(el => el.value));
+          const links = await collectInviteLinks(page);
           assert.equal(new Set(links).size, count);
           links.forEach(url => assert.equal(decodePayload(new URL(url).hash).count, count));
           await begin(page); await page.locator('[data-action="judge"]').click();
@@ -242,7 +326,7 @@ try {
         await context.close();
       }
       // Malformed URLs, XSS-bearing names/payloads, and blocked localStorage.
-      const edge = await browser.newContext({ viewport: { width: 320, height: 700 }, locale: 'ko-KR' });
+      const edge = await browser.newContext({ viewport: { width: 320, height: 700 }, deviceScaleFactor: 2, locale: 'ko-KR' });
       const bad = await edge.newPage(); watch(bad); await bad.goto(new URL('card.html#broken', base).href);
       await bad.getByRole('heading', { name: '카드를 열 수 없어요' }).waitFor(); await assertLayout(bad, `${engine} invalid card`);
       const payload = { v: 1, roundId: 'a'.repeat(24), round: 1, game: 'liar', recipient: '<b>X</b>', seat: 1, info: { role: 'citizen', category: '<svg onload=alert(1)>', word: '<img src=x onerror=alert(1)>' } };
@@ -254,11 +338,26 @@ try {
       for (const [i, name] of ['가나다라마바사아자차카타', 'ABCDEFGHIJKL', '😊'.repeat(12)].entries()) await bad.locator(`#player-${i}`).fill(name);
       await bad.getByRole('button', { name: '게임 만들기', exact: true }).click(); await bad.locator('#invite-0').waitFor();
       await assertLayout(bad, `${engine} 320px maximum-length names`);
+      await bad.locator('[data-action="new-group"]').click(); await bad.locator('[data-action="confirm-new-group"]').click();
+      await bad.locator('.game-choice').nth(2).click();
+      await bad.locator('#player-count').selectOption('8');
+      for (let i = 0; i < 8; i++) await bad.locator(`#player-${i}`).fill('😊'.repeat(11) + i);
+      await bad.getByRole('button', { name: '게임 만들기', exact: true }).click();
+      const denseLinks = await collectInviteLinks(bad, true);
+      await assertMobileLayouts(bad, `${engine} maximum-density QR`);
+      await bad.locator('[data-action="qr-large"]').click();
+      assert.equal(await scanQR(bad, 'dialog .invite-qr'), denseLinks[0]);
+      await assertMobileLayouts(bad, `${engine} maximum-density enlarged QR`);
+      await screenshot(bad, `${engine}-qr-dense-mobile`, false);
+      await bad.keyboard.press('Escape');
+      await bad.locator('dialog[open]').waitFor({ state: 'hidden' });
+      await showInvite(bad, 1);
+      assert.equal(await bad.locator('.invite-qr').count(), 1);
       await edge.close();
       const blocked = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' });
       await blocked.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Blocked', 'SecurityError'); } }); });
       const blockedPage = await blocked.newPage(); watch(blockedPage); await blockedPage.goto(base); await create(blockedPage, 'taboo'); assert.equal(await blockedPage.locator('#storage-warning').isVisible(), true); await blocked.close();
-      reports.push({ engine, status: 'passed', games: 3, playerCountsFullFlow: [3, 8], playerCountsHostFlow: [3, 4, 5, 6, 7, 8], mobileWidths: [320, 360, 390, 430, 768], desktopWidth: 1280, basePath: '/ggme/' });
+      reports.push({ engine, status: 'passed', games: 3, playerCountsFullFlow: [3, 8], playerCountsHostFlow: [3, 4, 5, 6, 7, 8], mobileWidths: [320, 360, 390, 430, 768], desktopWidth: 1280, basePath: '/ggme/', qrDecodedFromRenderedSVG: true, singleInviteNavigation: true, maximumDensityQR: true });
     } finally { await browser.close(); }
   }
   assert.deepEqual(errors, [], 'browser console/page errors'); assert.deepEqual(externalRequests, [], 'unexpected external network requests');

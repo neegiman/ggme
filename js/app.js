@@ -2,6 +2,7 @@ import { validateNames, majorityTarget, scoreRound, commitResult, remainingMs, f
 import { GAMES, WORDS } from './data.js';
 import { createSession, createRound, personalPayload } from './round.js';
 import { makeInvite } from './links.js';
+import { qrSVG } from './qr.js';
 import { loadStore, saveStore, STORAGE_KEY } from './storage.js';
 import { escapeHTML as e, icon, gameIcon, avatar } from './ui.js';
 
@@ -14,6 +15,8 @@ let store = loaded.value;
 let setup = { game: 'liar', category: 'daily', seconds: 180, playerCount: 3, names: Array(8).fill('') };
 let toastTimeout;
 let storageDirty = false;
+let inviteSeat = 0;
+let inviteRoundId = null;
 
 function toast(message) {
   const node = document.querySelector('#toast');
@@ -25,12 +28,35 @@ function persist() {
   document.querySelector('#storage-warning').hidden = !storageDirty;
   document.querySelector('#history-count').textContent = String(store.archive.length + (store.session?.history.length || 0));
 }
-function showModal(title, html) {
+function showModal(title, html, className = '') {
+  modal.className = className;
   document.querySelector('#modal-title').textContent = title;
   document.querySelector('#modal-body').innerHTML = html;
   if (!modal.open) modal.showModal();
+  fitInviteQR();
+}
+function fitInviteQR() {
+  const ratio = window.devicePixelRatio || 1;
+  for (const svg of document.querySelectorAll('.invite-qr')) {
+    const available = svg.parentElement.clientWidth;
+    if (!available) continue;
+    const edge = svg.viewBox.baseVal.width;
+    // Keep every module an integer number of screen pixels. Fractional modules
+    // can make dense codes unreadable after a phone camera resamples the image.
+    const scale = Math.max(1, Math.floor(available * ratio / edge));
+    const size = edge * scale / ratio;
+    svg.setAttribute('width', String(size));
+    svg.setAttribute('height', String(size));
+  }
 }
 function closeModal() { modal.close(); }
+modal.addEventListener('close', () => {
+  // Do not retain the previous person's enlarged QR in the closed dialog.
+  if (modal.classList.contains('qr-dialog')) {
+    document.querySelector('#modal-body').replaceChildren();
+    modal.className = '';
+  }
+});
 function focusMain() { main.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: 'instant' }); }
 function ruleText(game) {
   if (game === 'liar') return '<li>시민들은 같은 단어를, 라이어 1명은 카테고리만 알아요.</li><li>자신을 제외한 한 사람에게 투표해요. 단독 최다 득표자를 지목해요. 최다 득표가 동률이면 라이어가 이겨요.</li><li>라이어가 지목되면 단어를 한 번 추측해요. 정답이면 라이어 승리, 오답이면 시민 승리예요.</li><li>라이어 승리 시 라이어 +3점. 시민 승리 시 시민 각각 +2점. 패자는 0점이에요.</li>';
@@ -59,8 +85,21 @@ function roundHeader() {
 }
 function inviteScreen() {
   const s = store.session, r = s.round;
+  if (inviteRoundId !== r.id) { inviteRoundId = r.id; inviteSeat = 0; }
+  const i = inviteSeat, name = s.players[i];
+  const link = makeInvite(personalPayload(s, i), location.href);
+  let qr;
+  try { qr = `<div class="qr-frame">${qrSVG(link, `${name}님의 개인 카드 QR 코드`)}</div><p class="qr-caption">본인 휴대폰 카메라로 스캔해 주세요.</p><button class="text-button full" data-action="qr-large">QR 크게 보기</button>`; }
+  catch { qr = '<p class="notice" role="status">QR을 만들지 못했어요. 아래 개인 링크를 복사하거나 공유해 주세요.</p>'; }
   const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
-  return `<section class="round-section"><div class="section-heading"><div><span class="step-number">01</span><h2>비밀을 한 사람씩 전달해요</h2></div></div><p class="section-description">이름을 확인하고, 해당 참가자에게만 개인 링크를 보내 주세요. 카드 확인 후 직접 알려 달라고 해 주세요.</p>${isLocal ? '<div class="notice"><strong>현재 주소는 이 컴퓨터에서만 열려요.</strong><p>휴대폰으로 플레이하려면 GitHub Pages 주소 또는 같은 Wi-Fi의 컴퓨터 IP 주소로 접속한 뒤 링크를 만들어 주세요.</p></div>' : ''}<div class="invite-grid">${s.players.map((name, i) => { const link = makeInvite(personalPayload(s, i), location.href); return `<article class="panel invite-card"><div class="invite-card-head">${avatar(name, i)}<div><h3>${e(name)}</h3><span>참가자 ${i + 1} · 개인 카드</span></div>${icon('lock')}</div><label class="sr-only" for="invite-${i}">${e(name)}님의 초대 링크</label><input class="link-field" id="invite-${i}" value="${e(link)}" readonly><div class="invite-actions"><button class="button secondary" data-action="copy" data-seat="${i}">${icon('copy')}링크 복사</button><button class="icon-button bordered" data-action="share" data-seat="${i}" aria-label="${e(name)}님 링크 공유">${icon('share')}</button></div><a class="text-button open-card" href="${e(link)}" target="_blank" rel="noopener noreferrer">이 기기에서 카드 열기 ↗</a><label class="delivered-check"><input type="checkbox" data-delivered="${i}" ${r.shared[i] ? 'checked' : ''}><span>링크 전달 및 카드 확인 완료</span></label></article>`; }).join('')}</div><p class="field-help">체크 표시는 생성자가 수동으로 기록해요. 참가자의 접속·카드 열람 여부를 자동으로 확인하지 않아요. 이 기기에서는 본인 카드만 열어 주세요.</p><div class="round-actions"><button class="text-button" data-action="rules">${icon('info')}플레이 방법</button><button class="button primary" data-action="start" ${r.shared.every(Boolean) ? '' : 'disabled'}>모두 확인했어요 · 대화 시작${icon('arrow')}</button></div></section>`;
+  return `<section class="round-section"><div class="section-heading"><div><span class="step-number">01</span><h2>비밀을 한 사람씩 전달해요</h2></div></div><p class="section-description">이름을 확인하고 해당 참가자에게만 QR을 보여 주거나 개인 링크를 보내 주세요.</p>${isLocal ? '<div class="notice"><strong>현재 주소는 이 컴퓨터에서만 열려요.</strong><p>휴대폰으로 플레이하려면 GitHub Pages 주소 또는 같은 Wi-Fi의 컴퓨터 IP 주소로 접속한 뒤 링크를 만들어 주세요.</p></div>' : ''}<div class="invite-viewer" data-invite-count="${s.players.length}"><div class="invite-navigation"><button class="button secondary" data-action="invite-prev" aria-label="이전 참가자" ${i === 0 ? 'disabled' : ''}>${icon('arrow', 'arrow-back')}이전</button><span class="invite-position" role="status" aria-live="polite">참가자 ${i + 1} / ${s.players.length}</span><button class="button secondary" data-action="invite-next" aria-label="다음 참가자" ${i === s.players.length - 1 ? 'disabled' : ''}>다음${icon('arrow')}</button></div><article class="panel invite-card" data-seat="${i}"><div class="invite-card-head">${avatar(name, i)}<div><h3 id="invite-name" tabindex="-1">${e(name)}</h3><span>참가자 ${i + 1} · 개인 카드 · ROUND ${r.number}</span></div>${icon('lock')}</div>${qr}<label class="sr-only" for="invite-${i}">${e(name)}님의 초대 링크</label><input class="link-field" id="invite-${i}" value="${e(link)}" readonly><div class="invite-actions"><button class="button secondary" data-action="copy" data-seat="${i}">${icon('copy')}링크 복사</button><button class="icon-button bordered" data-action="share" data-seat="${i}" aria-label="${e(name)}님 링크 공유">${icon('share')}</button></div><a class="text-button open-card" href="${e(link)}" target="_blank" rel="noopener noreferrer">이 기기에서 카드 열기 ↗</a><label class="delivered-check"><input type="checkbox" data-delivered="${i}" ${r.shared[i] ? 'checked' : ''}><span>링크 전달 및 카드 확인 완료</span></label></article><p class="invite-progress" id="invite-progress" role="status">${r.shared.filter(Boolean).length} / ${s.players.length}명 카드 확인 완료</p></div><p class="field-help">체크 표시는 생성자가 수동으로 기록해요. QR 스캔·카드 열람 여부를 자동으로 확인하지 않아요. 이 기기에서는 본인 카드만 열어 주세요.</p><div class="round-actions"><button class="text-button" data-action="rules">${icon('info')}플레이 방법</button><button class="button primary" data-action="start" ${r.shared.every(Boolean) ? '' : 'disabled'}>모두 확인했어요 · 대화 시작${icon('arrow')}</button></div></section>`;
+}
+function moveInvite(delta) {
+  const next = inviteSeat + delta;
+  if (next < 0 || next >= store.session.players.length) return;
+  inviteSeat = next;
+  renderRound();
+  document.querySelector('#invite-name').focus({ preventScroll: true });
 }
 function timerPanel() {
   const r = store.session.round;
@@ -94,7 +133,7 @@ function resultScreen() {
 function renderRound(moveFocus = false) {
   const phase = store.session.round.phase;
   main.innerHTML = `${roundHeader()}${({ invite: inviteScreen, play: playScreen, judge: judgeScreen, result: resultScreen }[phase])()}<div class="manual-banner">${icon('info')}<p>생성자 중심 수동 진행 · 개인 화면과 자동으로 동기화되지 않아요. 새 라운드에서는 새 링크를 전달해 주세요.</p></div>`;
-  updateTimer(); if (moveFocus) focusMain();
+  fitInviteQR(); updateTimer(); if (moveFocus) focusMain();
 }
 function render(moveFocus = false) { store.session ? renderRound(moveFocus) : renderHome(moveFocus); }
 function updateTimer() {
@@ -155,6 +194,13 @@ const actions = {
   history,
   guide: () => showModal('우리의 게임 나이트', `<ol class="rules-list"><li>생성자가 게임을 고르고 참가자 3~8명의 이름을 등록해요.</li><li>각자에게 다른 개인 링크를 보내요. 생성자도 참가한다면 본인 링크만 열어요.</li><li>개인 카드를 확인하고 함께 대화해요. 생성자는 타이머를 진행해요.</li><li>투표·금지어 위반을 직접 확인한 뒤 생성자가 판정해요.</li><li>결과와 통산 점수는 생성자의 이 브라우저에 저장돼요.</li></ol><div class="notice"><strong>서버 없이, 직접 진행해요.</strong><p>참가자의 접속, 카드 확인, 타이머, 투표는 기기 간 자동 공유되지 않아요. 이전 링크를 만료시키거나 회수할 수 없어요.</p></div><p class="subtle">링크는 비밀번호나 암호화된 인증 수단이 아니에요. 카드 정보가 주소에 담겨 있으니 해당 참가자에게만 전달하세요. 생성자 브라우저에는 전체 배정 정보가 있어요.</p><p class="subtle">현재 승패·점수는 설계서 확인 전 임시 규칙 v1입니다.</p><button class="button primary full" data-action="close-modal">시작해 볼까요</button>`),
   copy: button => copyLink(Number(button.dataset.seat)),
+  'invite-prev': () => moveInvite(-1),
+  'invite-next': () => moveInvite(1),
+  'qr-large': () => {
+    const s = store.session, name = s.players[inviteSeat];
+    const link = makeInvite(personalPayload(s, inviteSeat), location.href);
+    showModal(`${name}님의 개인 QR`, `<div class="qr-modal"><p class="qr-caption">ROUND ${s.round.number} · ${e(name)}님만 스캔해 주세요.</p><div class="qr-frame">${qrSVG(link, `${name}님의 개인 카드 QR 코드`)}</div><p class="qr-caption">카메라가 인식하지 못하면 링크 복사·공유를 이용해 주세요.</p></div><button class="button primary full" data-action="close-modal">닫기</button>`, 'qr-dialog');
+  },
   share: async button => {
     const seat = Number(button.dataset.seat);
     if (!navigator.share) return copyLink(seat);
@@ -239,7 +285,13 @@ document.addEventListener('change', event => {
   }
   if (input.name === 'duration') setup.seconds = Number(input.value);
   if (input.name === 'category') setup.category = input.value;
-  if (input.dataset.delivered !== undefined) { store.session.round.shared[Number(input.dataset.delivered)] = input.checked; persist(); document.querySelector('[data-action="start"]').disabled = !store.session.round.shared.every(Boolean); }
+  if (input.dataset.delivered !== undefined) {
+    const r = store.session.round;
+    r.shared[Number(input.dataset.delivered)] = input.checked;
+    persist();
+    document.querySelector('[data-action="start"]').disabled = !r.shared.every(Boolean);
+    document.querySelector('#invite-progress').textContent = `${r.shared.filter(Boolean).length} / ${r.shared.length}명 카드 확인 완료`;
+  }
   if (input.dataset.vote !== undefined) { store.session.round.draft.votes[Number(input.dataset.vote)] = input.value === '' ? '' : Number(input.value); persist(); }
   if (input.dataset.draft === 'earlyGuess') { store.session.round.draft.earlyGuess = input.checked; persist(); renderRound(); }
 });
@@ -249,6 +301,7 @@ document.addEventListener('input', event => {
 });
 document.addEventListener('visibilitychange', updateTimer);
 window.addEventListener('pageshow', updateTimer);
+window.addEventListener('resize', fitInviteQR);
 // A second host tab must not independently award points from a stale round.
 window.addEventListener('storage', event => {
   if (event.key !== STORAGE_KEY) return;

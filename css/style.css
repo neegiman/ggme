@@ -157,7 +157,22 @@ select { padding-right: 28px; }
 .phase-stepper .complete > span { background: var(--surface); }
 .phase-stepper .icon { width: 13px; height: 13px; }
 .round-section { padding: 8px 0 0; }
-.invite-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 17px; margin-top: 23px; }
+.invite-viewer { max-width: 520px; margin: 23px auto 0; }
+.invite-navigation { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.invite-navigation .button { min-height: 48px; padding: 10px 14px; gap: 6px; }
+.invite-position { text-align: center; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.arrow-back { transform: rotate(180deg); }
+.invite-progress { margin-top: 14px; text-align: center; color: var(--muted); font-size: 12px; }
+.qr-frame { width: min(100%, 300px); margin: 0 auto; }
+.invite-qr { display: block; width: auto; max-width: 100%; height: auto; aspect-ratio: 1; margin: 0 auto; }
+.qr-caption { text-align: center; color: var(--muted); font-size: 12px; line-height: 1.8; margin: 12px 0 0; overflow-wrap: anywhere; }
+.invite-card > .text-button.full { margin: 5px 0 14px; }
+.qr-dialog { width: min(720px, calc(100vw - 24px)); max-width: calc(100vw - 24px); padding: 16px; }
+.qr-modal .qr-frame { width: 100%; max-width: 580px; margin-top: 16px; }
+.qr-modal { margin-bottom: 18px; }
+@media (max-width: 360px) {
+  .invite-card .qr-frame { width: calc(100% + 8px); margin-inline: -4px; }
+}
 .invite-card { padding: 23px; min-width: 0; }
 .invite-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 23px; }
 .invite-card-head h3 { font-size: 17px; }
@@ -388,7 +403,8 @@ dialog::backdrop { background: var(--surface); backdrop-filter: blur(5px); }
   .phase-stepper li { flex-direction: column; gap: 7px; font-size: 10px; text-align: center; }
   .phase-stepper li:last-child { flex: 1; }
   .phase-stepper li::after { position: absolute; left: 69%; top: 12px; width: 62%; margin: 0; z-index: -1; }
-  .invite-grid { grid-template-columns: 1fr; gap: 13px; }
+  .invite-navigation .button { padding-inline: 10px; font-size: 12px; }
+  .invite-position { font-size: 11px; }
   .invite-card { padding: 20px; }
   .invite-card-head { margin-bottom: 17px; }
   .invite-actions > .button { font-size: 13px; }
