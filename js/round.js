@@ -1,5 +1,5 @@
 import { validateNames, validatePlayerCount, randomInt, randomId, shuffle, RULES_VERSION } from './core.js';
-import { GAMES, WORDS, LOCATIONS, TABOO_WORDS } from './data.js';
+import { GAMES, WORDS, LOCATIONS, TABOO_WORDS } from './data.js?v=words-1';
 
 export function createSession(names, game, category, seconds) {
   const players = validateNames(names);
@@ -11,7 +11,7 @@ export function createRound(game, category, seconds, number, playerCount = 3) {
   const base = { id: randomId(), number, playerCount, game, category, seconds, phase: 'invite', shared: Array(playerCount).fill(false), special: null, secret: null, words: null, jobs: null, draft: { votes: Array(playerCount).fill(''), guess: '', earlyGuess: false, violations: Array(playerCount).fill(0) }, result: null, timer: { running: false, remaining: seconds * 1000, deadline: null } };
   if (game === 'liar') { base.special = randomInt(playerCount); const list = WORDS[category].items; base.secret = list[randomInt(list.length)]; }
   if (game === 'spy') { base.special = randomInt(playerCount); const place = LOCATIONS[randomInt(LOCATIONS.length)]; base.secret = place.name; base.jobs = shuffle(Array.from({ length: playerCount }, (_, i) => place.jobs[i % place.jobs.length])); }
-  if (game === 'taboo') base.words = shuffle(TABOO_WORDS).slice(0, playerCount);
+  if (game === 'taboo') base.words = shuffle(WORDS[category].kind === 'era' ? WORDS[category].items : TABOO_WORDS).slice(0, playerCount);
   return base;
 }
 

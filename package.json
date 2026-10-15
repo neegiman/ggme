@@ -1,9 +1,9 @@
 {
   "name": "ggme",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "서버 없이 즐기는 3인용 소셜 추리 게임",
+  "description": "서버 없이 즐기는 3~8인용 시대별 단어 소셜 추리 게임",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "build": "node scripts/package.mjs",

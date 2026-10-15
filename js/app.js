@@ -1,9 +1,10 @@
 import { validateNames, majorityTarget, scoreRound, commitResult, remainingMs, formatTime } from './core.js';
-import { GAMES, WORDS } from './data.js';
-import { createSession, createRound, personalPayload } from './round.js';
+import { GAMES, WORDS } from './data.js?v=words-1';
+import { DEFAULT_WORD_PACK, ERA_PACKS, WORD_SOURCES, wordDetail } from './vocabulary.js';
+import { createSession, createRound, personalPayload } from './round.js?v=words-1';
 import { makeInvite } from './links.js';
 import { qrSVG } from './qr.js';
-import { loadStore, saveStore, STORAGE_KEY } from './storage.js';
+import { loadStore, saveStore, STORAGE_KEY } from './storage.js?v=words-1';
 import { escapeHTML as e, icon, gameIcon, avatar } from './ui.js';
 
 const main = document.querySelector('#main');
@@ -12,7 +13,7 @@ let storage;
 try { storage = window.localStorage; } catch { storage = { getItem() { throw new Error('저장소를 사용할 수 없습니다.'); }, setItem() { throw new Error('저장소를 사용할 수 없습니다.'); } }; }
 const loaded = loadStore(storage);
 let store = loaded.value;
-let setup = { game: 'liar', category: 'daily', seconds: 180, playerCount: 3, names: Array(8).fill('') };
+let setup = { game: 'liar', category: DEFAULT_WORD_PACK, seconds: 180, playerCount: 3, names: Array(8).fill('') };
 let toastTimeout;
 let storageDirty = false;
 let inviteSeat = 0;
@@ -67,21 +68,49 @@ function rules(game) {
   showModal(`${GAMES[game].name} 플레이 방법`, `<div class="rule-intro ${game}">${gameIcon(game)}<p>${e(GAMES[game].short)}</p></div><ol class="rules-list">${ruleText(game)}</ol><div class="notice"><strong>임시 규칙 v1</strong><p>요청된 설계서 원문을 확인하기 전의 플레이 규칙입니다. 원문 규칙과의 일치는 아직 검증되지 않았어요.</p></div>${game !== 'taboo' ? '<p class="subtle">단어·장소 정답은 공백과 영문 대소문자를 제외하고 정확히 비교해요. 동의어는 자동 인정하지 않아요.</p>' : ''}<button class="button primary full" data-action="close-modal">알겠어요</button>`);
 }
 function renderHome(moveFocus = false) {
-  main.innerHTML = `<section class="hero"><div class="hero-copy"><span class="eyebrow">C:\\GGME&gt; START</span><span class="pill"><span class="tiny-dot"></span>3~8명이 모이면, 준비 끝</span><h1>우리 중,<br><span>누가 비밀을 숨길까?</span></h1><p>휴대폰에는 나만의 비밀을.<br>테이블 위에는 끝없는 의심을.</p><div class="hero-meta"><span>${icon('people')}3~8명 선택</span><span>${icon('clock')}한 판 2–10분</span><span>${icon('chat')}같은 자리에서</span></div></div><div class="terminal-output" aria-hidden="true"><div class="terminal-output-head">C:\\GGME\\SYSTEM &nbsp; [MANUAL MODE]</div><div class="terminal-output-body"><p>GGME [Version 0.2.0]</p><p class="terminal-muted">SOCIAL DEDUCTION / 3–8 PLAYERS</p><div class="terminal-divider"></div><div class="terminal-menu"><span>[01]</span><span>LIAR.EXE</span><span>라이어</span></div><div class="terminal-menu"><span>[02]</span><span>SPY.EXE</span><span>스파이</span></div><div class="terminal-menu"><span>[03]</span><span>TABOO.EXE</span><span>금지어</span></div><div class="terminal-divider"></div><p class="terminal-muted">비밀 카드는 각자의 화면에.</p><p class="terminal-muted">진행은 생성자가, 대화는 함께.</p><p class="terminal-prompt">C:\\GGME&gt;<span class="terminal-cursor"></span></p></div></div></section>
+  main.innerHTML = `<section class="hero"><div class="hero-copy"><span class="eyebrow">C:\\GGME&gt; START</span><span class="pill"><span class="tiny-dot"></span>3~8명이 모이면, 준비 끝</span><h1>우리 중,<br><span>누가 비밀을 숨길까?</span></h1><p>휴대폰에는 나만의 비밀을.<br>테이블 위에는 끝없는 의심을.</p><div class="hero-meta"><span>${icon('people')}3~8명 선택</span><span>${icon('clock')}한 판 2–10분</span><span>${icon('chat')}같은 자리에서</span></div></div><div class="terminal-output" aria-hidden="true"><div class="terminal-output-head">C:\\GGME\\SYSTEM &nbsp; [MANUAL MODE]</div><div class="terminal-output-body"><p>GGME [Version 0.3.0]</p><p class="terminal-muted">SOCIAL DEDUCTION / 3–8 PLAYERS</p><div class="terminal-divider"></div><div class="terminal-menu"><span>[01]</span><span>LIAR.EXE</span><span>라이어</span></div><div class="terminal-menu"><span>[02]</span><span>SPY.EXE</span><span>스파이</span></div><div class="terminal-menu"><span>[03]</span><span>TABOO.EXE</span><span>금지어</span></div><div class="terminal-divider"></div><p class="terminal-muted">비밀 카드는 각자의 화면에.</p><p class="terminal-muted">진행은 생성자가, 대화는 함께.</p><p class="terminal-prompt">C:\\GGME&gt;<span class="terminal-cursor"></span></p></div></div></section>
     <form id="create-form" novalidate>
       <section class="game-section"><div class="section-heading"><div><span class="step-number">01</span><h2>오늘은 어떤 게임?</h2></div><span class="section-caption">하나를 골라 주세요</span></div><div class="game-grid">${Object.entries(GAMES).map(([id, game], i) => `<label class="game-choice"><input type="radio" name="game" value="${id}" ${setup.game === id ? 'checked' : ''}><span class="game-card ${id}"><span class="game-card-top"><span class="game-symbol">${gameIcon(id)}</span><span class="choice-indicator">${icon('check')}</span></span><span class="eyebrow">0${i + 1} / ${game.en}</span><strong>${game.name}</strong><span class="game-description">${e(game.description).replace(/\n/g, '<br> ')}</span><span class="game-card-bottom"><span>${game.tag}</span><span>${game.time / 60} MIN ${icon('arrow')}</span></span></span></label>`).join('')}</div><button type="button" class="text-button rule-link" data-action="selected-rules">${icon('info')}선택한 게임의 규칙 보기</button></section>
-      <section class="panel setup-panel"><div class="player-setup"><div class="section-heading"><div><span class="step-number">02</span><h2>함께할 사람들</h2></div></div><p class="section-description">생성자도 참가할 수 있어요. 서로 다른 이름을 입력해 주세요.</p><label class="select-label count-label" for="player-count">참가 인원<select id="player-count" name="playerCount">${Array.from({ length: 6 }, (_, i) => i + 3).map(n => `<option value="${n}" ${setup.playerCount === n ? 'selected' : ''}>${n}명</option>`).join('')}</select></label><div class="player-fields" id="player-fields">${Array.from({ length: setup.playerCount }, (_, i) => i).map(i => `<label><span class="input-label"><span class="seat-dot seat-${i}">${i + 1}</span>참가자 ${i + 1}</span><input id="player-${i}" name="player-${i}" type="text" autocomplete="off" maxlength="24" placeholder="이름 또는 닉네임" value="${e(setup.names[i])}" aria-describedby="name-help form-error" required></label>`).join('')}</div><p id="name-help" class="field-help">이름은 1~12자 · 같은 이름은 사용할 수 없어요</p><p id="form-error" class="form-error" role="alert" hidden></p></div><div class="game-settings"><div class="settings-heading">${icon('clock')}라운드 설정</div><label class="select-label" for="duration">대화 시간<select id="duration" name="duration">${durationOptions(setup.seconds)}</select></label><label class="select-label" id="category-label" for="category" ${setup.game === 'liar' ? '' : 'hidden'}>단어 카테고리<select id="category" name="category">${categoryOptions(setup.category)}</select></label><p class="field-help">시간이 끝나면 생성자가 직접 판정해요.</p></div></section>
+      <section class="panel setup-panel"><div class="player-setup"><div class="section-heading"><div><span class="step-number">02</span><h2>함께할 사람들</h2></div></div><p class="section-description">생성자도 참가할 수 있어요. 서로 다른 이름을 입력해 주세요.</p><label class="select-label count-label" for="player-count">참가 인원<select id="player-count" name="playerCount">${Array.from({ length: 6 }, (_, i) => i + 3).map(n => `<option value="${n}" ${setup.playerCount === n ? 'selected' : ''}>${n}명</option>`).join('')}</select></label><div class="player-fields" id="player-fields">${Array.from({ length: setup.playerCount }, (_, i) => i).map(i => `<label><span class="input-label"><span class="seat-dot seat-${i}">${i + 1}</span>참가자 ${i + 1}</span><input id="player-${i}" name="player-${i}" type="text" autocomplete="off" maxlength="24" placeholder="이름 또는 닉네임" value="${e(setup.names[i])}" aria-describedby="name-help form-error" required></label>`).join('')}</div><p id="name-help" class="field-help">이름은 1~12자 · 같은 이름은 사용할 수 없어요</p><p id="form-error" class="form-error" role="alert" hidden></p></div><div class="game-settings"><div class="settings-heading">${icon('clock')}라운드 설정</div><label class="select-label" for="duration">대화 시간<select id="duration" name="duration">${durationOptions(setup.seconds)}</select></label><label class="select-label" id="category-label" for="category" ${setup.game === 'spy' ? 'hidden' : ''}>시대별 단어 · 기본 단어<select id="category" name="category">${categoryOptions(setup.category)}</select></label><p class="field-help" id="word-pack-note">${e(packDescription(setup.game, setup.category))}</p><p class="field-help" id="era-note" ${setup.game === 'spy' ? 'hidden' : ''}>60~00은 1960~2000년대 사용 시기예요.<br>60~80년대는 시대어·추억말도 포함해요.</p><button type="button" class="text-button word-info-button" data-action="word-sources">단어 자료·선정 기준 보기</button><p class="field-help">시간이 끝나면 생성자가 직접 판정해요.</p></div></section>
       <div class="create-bar"><div>${icon('lock')}<p><strong>비밀은 각자의 링크에만</strong><span>게임을 만들면 참가자마다 개인 초대 링크가 생겨요.</span></p></div><button class="button primary create-button" type="submit">게임 만들기${icon('arrow')}</button></div>
     </form><div class="manual-banner">${icon('info')}<p><strong>같은 자리에서, 직접 대화하는 게임이에요.</strong> 링크 전달·시작·투표·판정은 생성자가 진행하며, 기기 간 자동 동기화는 제공하지 않아요.</p></div><p class="draft-note">설계서 확인 대기 · 승패와 점수는 임시 규칙 v1을 적용합니다.</p>`;
   if (moveFocus) focusMain();
 }
 function durationOptions(selected) { return [120, 180, 240, 300, 420, 600].map(s => `<option value="${s}" ${s === selected ? 'selected' : ''}>${s / 60}분${s === 180 ? ' · 가볍게 한 판' : ''}</option>`).join(''); }
-function categoryOptions(selected) { return Object.entries(WORDS).map(([id, category]) => `<option value="${id}" ${id === selected ? 'selected' : ''}>${category.label}</option>`).join(''); }
+function categoryOptions(selected, game = setup.game) {
+  const entries = Object.entries(WORDS);
+  const eras = entries.filter(([, p]) => p.kind === 'era');
+  const basics = game === 'taboo' ? [['daily', { label: '기본 대화어' }]] : entries.filter(([, p]) => p.kind !== 'era');
+  const chosen = game === 'taboo' && WORDS[selected]?.kind !== 'era' ? 'daily' : selected;
+  const options = list => list.map(([id, p]) => `<option value="${id}" ${id === chosen ? 'selected' : ''}>${e(p.label)}</option>`).join('');
+  return `<optgroup label="시대별 단어">${options(eras)}</optgroup><optgroup label="기본 단어">${options(basics)}</optgroup>`;
+}
+function packDescription(game, category) {
+  if (game === 'spy') return '스파이는 장소와 직업을 추리해요.';
+  const p = WORDS[category];
+  return p?.kind === 'era' ? `${p.summary} · ${p.items.length}개` : game === 'taboo' ? '자연스러운 대화에서 자주 나오는 기본 표현을 배정해요.' : '친숙한 일상 단어로 가볍게 시작해요.';
+}
+function sourceLink(id) {
+  const source = WORD_SOURCES[id];
+  return `<a class="word-source-link" href="${e(source.url)}" target="_blank" rel="noopener noreferrer">${e(source.title)} ↗</a>`;
+}
+function wordSources() {
+  showModal('시대별 단어 · 뜻과 출처', `<p>60·70·80·90·00은 <strong>1960~2000년대의 사용·문화 시기</strong>예요. 출생 연도 기준은 아니에요.</p><p>60~80년대는 시대어·추억말을 함께 담고, 90·00년대는 통신·인터넷 유행어를 중심으로 골랐어요.</p><p>아래 자료를 참고한 게임용 분류예요. 앞뒤 시대에 걸쳐 쓰인 말도 있어요. 이번 판 단어의 뜻은 결과 화면에서 확인해요.</p><div class="word-pack-overview">${Object.values(ERA_PACKS).map(p => `<p><strong>${e(p.label)} · ${p.entries.length}개</strong><span>${e(p.summary)}</span></p>`).join('')}</div><h3>참고 자료</h3><ul class="word-source-list">${Object.entries(WORD_SOURCES).map(([id, source]) => `<li>${sourceLink(id)}<p>${e(source.detail)}</p></li>`).join('')}</ul><button class="button primary full" data-action="close-modal">닫기</button>`);
+}
+function revealedWordDetails() {
+  const r = store.session.round;
+  if (r.game === 'spy' || WORDS[r.category].kind !== 'era') return '';
+  const words = r.game === 'taboo' ? r.words : [r.secret];
+  return `<section class="panel word-definitions"><span class="eyebrow">WORDS FROM OUR TIME</span><h3>이번 판, 그 말의 뜻</h3><p class="field-help">뜻풀이는 게임용 요약이에요. 시대는 사용 맥락을 참고해 나눴어요.</p><dl>${words.map(word => {
+    const entry = wordDetail(r.category, word);
+    return entry ? `<div><dt>${e(word)}</dt><dd><p>${e(entry.meaning)}</p>${entry.sources.map(sourceLink).join('')}</dd></div>` : '';
+  }).join('')}</dl><button class="text-button" data-action="word-sources">단어 선정 기준과 전체 출처</button></section>`;
+}
 function roundHeader() {
   const s = store.session, r = s.round, game = GAMES[r.game];
   const phases = ['invite', 'play', 'judge', 'result'];
   const current = phases.indexOf(r.phase);
-  return `<div class="round-top"><div><span class="eyebrow">HOST’S TABLE · 생성자 화면</span><h1>${game.name}<span class="round-number">ROUND ${r.number.toString().padStart(2, '0')}</span></h1><p>라운드 코드 ${r.id.slice(0, 6).toUpperCase()} · ${r.seconds / 60}분${r.game === 'liar' ? ` · ${e(WORDS[r.category].label)}` : ''}</p></div><button class="button secondary small" data-action="new-group">새 게임</button></div><div class="score-strip">${s.players.map((name, i) => `<div>${avatar(name, i)}<span>${e(name)}</span><strong>${s.totals[i]}<small>점</small></strong></div>`).join('')}<span class="score-caption">통산 점수</span></div><ol class="phase-stepper" aria-label="게임 진행 단계">${['링크 전달', '대화하기', '투표·판정', '결과'].map((label, i) => `<li class="${i === current ? 'current' : i < current ? 'complete' : ''}" ${i === current ? 'aria-current="step"' : ''}><span>${i < current ? icon('check') : String(i + 1).padStart(2, '0')}</span>${label}</li>`).join('')}</ol>`;
+  return `<div class="round-top"><div><span class="eyebrow">HOST’S TABLE · 생성자 화면</span><h1>${game.name}<span class="round-number">ROUND ${r.number.toString().padStart(2, '0')}</span></h1><p>라운드 코드 ${r.id.slice(0, 6).toUpperCase()} · ${r.seconds / 60}분${r.game === 'spy' ? '' : ` · ${e(r.game === 'taboo' && WORDS[r.category].kind !== 'era' ? '기본 대화어' : WORDS[r.category].label)}` }</p></div><button class="button secondary small" data-action="new-group">새 게임</button></div><div class="score-strip">${s.players.map((name, i) => `<div>${avatar(name, i)}<span>${e(name)}</span><strong>${s.totals[i]}<small>점</small></strong></div>`).join('')}<span class="score-caption">통산 점수</span></div><ol class="phase-stepper" aria-label="게임 진행 단계">${['링크 전달', '대화하기', '투표·판정', '결과'].map((label, i) => `<li class="${i === current ? 'current' : i < current ? 'complete' : ''}" ${i === current ? 'aria-current="step"' : ''}><span>${i < current ? icon('check') : String(i + 1).padStart(2, '0')}</span>${label}</li>`).join('')}</ol>`;
 }
 function inviteScreen() {
   const s = store.session, r = s.round;
@@ -128,7 +157,7 @@ function judgeScreen() {
 function resultScreen() {
   const s = store.session, r = s.round, result = r.result;
   const winnerNames = result.winners.map(i => s.players[i]).join(', ');
-  return `<section class="result-container"><div class="result-banner">${icon('trophy')}<span class="eyebrow">ROUND COMPLETE</span><h2>${e(winnerNames)}${result.winners.length > 1 ? ' 공동' : ''} 승리!</h2><p>${e(result.reason)}</p><span class="saved-label">${icon('check')}${storageDirty ? '현재 탭에 반영됨 · 브라우저 저장 실패' : '결과와 점수를 이 브라우저에 저장했어요'}</span></div><div class="result-scores">${s.players.map((name, i) => `<div class="panel result-player ${result.winners.includes(i) ? 'winner' : ''}">${avatar(name, i)}<h3>${e(name)}</h3><span>${r.game === 'liar' ? r.special === i ? '라이어' : '시민' : r.game === 'spy' ? r.special === i ? '스파이' : '시민' : `위반 ${r.decision.violations[i]}회`}</span><strong>+${result.points[i]}<small>점</small></strong><p>통산 ${s.totals[i]}점</p></div>`).join('')}</div><div class="reveal-bar">${icon('eye')}<span>${r.game === 'taboo' ? '우리의 금지어' : r.game === 'liar' ? '비밀 단어' : '비밀 장소'}</span><strong>${r.game === 'taboo' ? s.players.map((name, i) => `${e(name)}: ${e(r.words[i])}`).join(' · ') : e(r.secret)}</strong></div><section class="panel next-round"><div><h3>한 판 더, 이번엔 다른 비밀로.</h3><p>같은 참가자들의 점수는 이어져요. 매 라운드 역할과 링크를 새로 배정해요.</p></div><label class="sr-only" for="next-game">다음 라운드 게임</label><select id="next-game">${Object.entries(GAMES).map(([id, g]) => `<option value="${id}" ${r.game === id ? 'selected' : ''}>${g.name}</option>`).join('')}</select><button class="button primary" data-action="next-round">다음 라운드${icon('arrow')}</button></section><div class="round-actions"><button class="text-button" data-action="history">${icon('trophy')}플레이 기록 보기</button><button class="text-button" data-action="new-group">새 멤버로 시작하기</button></div></section>`;
+  return `<section class="result-container"><div class="result-banner">${icon('trophy')}<span class="eyebrow">ROUND COMPLETE</span><h2>${e(winnerNames)}${result.winners.length > 1 ? ' 공동' : ''} 승리!</h2><p>${e(result.reason)}</p><span class="saved-label">${icon('check')}${storageDirty ? '현재 탭에 반영됨 · 브라우저 저장 실패' : '결과와 점수를 이 브라우저에 저장했어요'}</span></div><div class="result-scores">${s.players.map((name, i) => `<div class="panel result-player ${result.winners.includes(i) ? 'winner' : ''}">${avatar(name, i)}<h3>${e(name)}</h3><span>${r.game === 'liar' ? r.special === i ? '라이어' : '시민' : r.game === 'spy' ? r.special === i ? '스파이' : '시민' : `위반 ${r.decision.violations[i]}회`}</span><strong>+${result.points[i]}<small>점</small></strong><p>통산 ${s.totals[i]}점</p></div>`).join('')}</div><div class="reveal-bar">${icon('eye')}<span>${r.game === 'taboo' ? '우리의 금지어' : r.game === 'liar' ? '비밀 단어' : '비밀 장소'}</span><strong>${r.game === 'taboo' ? s.players.map((name, i) => `${e(name)}: ${e(r.words[i])}`).join(' · ') : e(r.secret)}</strong></div>${revealedWordDetails()}<section class="panel next-round"><div><h3>한 판 더, 이번엔 다른 비밀로.</h3><p>같은 참가자들의 점수는 이어져요. 매 라운드 역할과 링크를 새로 배정해요.</p></div><div class="next-settings"><label class="select-label" for="next-game">다음 게임<select id="next-game">${Object.entries(GAMES).map(([id, g]) => `<option value="${id}" ${r.game === id ? 'selected' : ''}>${g.name}</option>`).join('')}</select></label><label class="select-label" id="next-category-label" for="next-category" ${r.game === 'spy' ? 'hidden' : ''}>다음 단어 팩<select id="next-category">${categoryOptions(r.category, r.game)}</select></label><p class="field-help" id="next-pack-note">${e(packDescription(r.game, r.category))}</p></div><button class="button primary" data-action="next-round">다음 라운드${icon('arrow')}</button></section><div class="round-actions"><button class="text-button" data-action="history">${icon('trophy')}플레이 기록 보기</button><button class="text-button" data-action="new-group">새 멤버로 시작하기</button></div></section>`;
 }
 function renderRound(moveFocus = false) {
   const phase = store.session.round.phase;
@@ -190,6 +219,7 @@ function newGroup() {
 const actions = {
   'close-modal': closeModal,
   'selected-rules': () => rules(setup.game),
+  'word-sources': wordSources,
   rules: () => rules(store.session.round.game),
   history,
   guide: () => showModal('우리의 게임 나이트', `<ol class="rules-list"><li>생성자가 게임을 고르고 참가자 3~8명의 이름을 등록해요.</li><li>각자에게 다른 개인 링크를 보내요. 생성자도 참가한다면 본인 링크만 열어요.</li><li>개인 카드를 확인하고 함께 대화해요. 생성자는 타이머를 진행해요.</li><li>투표·금지어 위반을 직접 확인한 뒤 생성자가 판정해요.</li><li>결과와 통산 점수는 생성자의 이 브라우저에 저장돼요.</li></ol><div class="notice"><strong>서버 없이, 직접 진행해요.</strong><p>참가자의 접속, 카드 확인, 타이머, 투표는 기기 간 자동 공유되지 않아요. 이전 링크를 만료시키거나 회수할 수 없어요.</p></div><p class="subtle">링크는 비밀번호나 암호화된 인증 수단이 아니에요. 카드 정보가 주소에 담겨 있으니 해당 참가자에게만 전달하세요. 생성자 브라우저에는 전체 배정 정보가 있어요.</p><p class="subtle">현재 승패·점수는 설계서 확인 전 임시 규칙 v1입니다.</p><button class="button primary full" data-action="close-modal">시작해 볼까요</button>`),
@@ -237,7 +267,7 @@ const actions = {
     if (!r.result) return;
     if (r.number >= 9999) throw new Error('새 멤버 게임을 시작해 주세요.');
     const game = document.querySelector('#next-game').value;
-    s.round = createRound(game, r.category, game === r.game ? r.seconds : GAMES[game].time, r.number + 1, s.players.length);
+    s.round = createRound(game, document.querySelector('#next-category').value, game === r.game ? r.seconds : GAMES[game].time, r.number + 1, s.players.length);
     persist(); renderRound(true);
   },
   'new-group': newGroup,
@@ -276,7 +306,12 @@ document.addEventListener('change', event => {
   if (input.name === 'game') {
     setup.game = input.value; setup.seconds = GAMES[input.value].time;
     document.querySelector('#duration').value = String(setup.seconds);
-    document.querySelector('#category-label').hidden = input.value !== 'liar';
+    document.querySelector('#category-label').hidden = input.value === 'spy';
+    document.querySelector('#era-note').hidden = input.value === 'spy';
+    const category = document.querySelector('#category');
+    category.innerHTML = categoryOptions(setup.category);
+    setup.category = category.value;
+    document.querySelector('#word-pack-note').textContent = packDescription(setup.game, setup.category);
   }
   if (input.name === 'playerCount') {
     setup.playerCount = Number(input.value);
@@ -284,7 +319,17 @@ document.addEventListener('change', event => {
     document.querySelector('#player-count').focus({ preventScroll: true });
   }
   if (input.name === 'duration') setup.seconds = Number(input.value);
-  if (input.name === 'category') setup.category = input.value;
+  if (input.name === 'category') {
+    setup.category = input.value;
+    document.querySelector('#word-pack-note').textContent = packDescription(setup.game, setup.category);
+  }
+  if (input.id === 'next-game' || input.id === 'next-category') {
+    const game = document.querySelector('#next-game').value;
+    const category = document.querySelector('#next-category');
+    if (input.id === 'next-game') category.innerHTML = categoryOptions(category.value, game);
+    document.querySelector('#next-category-label').hidden = game === 'spy';
+    document.querySelector('#next-pack-note').textContent = packDescription(game, category.value);
+  }
   if (input.dataset.delivered !== undefined) {
     const r = store.session.round;
     r.shared[Number(input.dataset.delivered)] = input.checked;

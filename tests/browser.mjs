@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { scoreRound } from '../js/core.js';
 import { decodePayload, encodePayload } from '../js/links.js';
 import { decodeRaster } from './qr-helper.mjs';
+import { WORDS } from '../js/data.js';
+import { ERA_PACKS, DEFAULT_WORD_PACK, wordDetail } from '../js/vocabulary.js';
 
 const require = createRequire(import.meta.url);
 const playwright = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -65,11 +67,12 @@ async function assertMobileLayouts(page, label) {
   }
   await page.setViewportSize(original);
 }
-async function create(page, game, count = 3) {
+async function create(page, game, count = 3, category) {
   await page.locator('.game-choice').nth(['liar', 'spy', 'taboo'].indexOf(game)).click();
   await page.locator('#player-count').selectOption(String(count));
   for (const [i, name] of ['민지', '준호', '서연', '지수', '도윤', '하린', '유진', '지호'].slice(0, count).entries()) await page.locator(`#player-${i}`).fill(name);
   await page.locator('#duration').selectOption('120');
+  if (category) await page.locator('#category').selectOption(category);
   await page.getByRole('button', { name: '게임 만들기', exact: true }).click();
   await page.locator('#invite-0').waitFor();
 }
@@ -325,6 +328,64 @@ try {
         assert.equal(await page.locator('#player-count').inputValue(), String(count));
         await context.close();
       }
+      // Every era controls the browser assignment and survives reload.
+      // Meanings appear after settlement; the next round can change the pack.
+      for (const [eraIndex, category] of Object.keys(ERA_PACKS).entries()) for (const game of ['liar', 'taboo']) {
+        console.log(`  ${category} ${game}: selected pool → result meanings/sources → reload → change pack`);
+        const context = await browser.newContext({ viewport: { width: 320, height: 844 }, isMobile: true, hasTouch: true, locale: 'ko-KR' });
+        const page = await context.newPage(); watch(page); await page.goto(base);
+        assert.equal(await page.locator('#category').inputValue(), DEFAULT_WORD_PACK);
+        if (eraIndex === 0 && game === 'liar') {
+          await page.locator('[data-action="word-sources"]').click();
+          assert.equal(await page.locator('.word-pack-overview > p').count(), 5);
+          assert.match(await page.locator('#modal-body').innerText(), /사용·문화 시기/);
+          for (const link of await page.locator('.word-source-list a').all()) {
+            assert.equal(new URL(await link.getAttribute('href')).protocol, 'https:');
+            assert.equal(await link.getAttribute('rel'), 'noopener noreferrer');
+          }
+          await assertMobileLayouts(page, `${engine} word sources`);
+          await screenshot(page, `${engine}-word-sources-mobile`, false);
+          await page.locator('dialog [data-action="close-modal"]').last().click();
+        }
+        await create(page, game, game === 'taboo' ? 8 : 3, category);
+        const initial = await read(page), r = initial.session.round;
+        assert.equal(r.category, category);
+        const words = game === 'taboo' ? r.words : [r.secret];
+        words.forEach(word => assert.ok(WORDS[category].items.includes(word)));
+        assert.equal(await page.locator('.word-definitions').count(), 0);
+        const oldLink = await page.locator('#invite-0').inputValue();
+        await page.reload(); assert.deepEqual((await read(page)).session.round, r);
+        await begin(page); await page.locator('[data-action="judge"]').click();
+        assert.equal(await page.locator('.word-definitions').count(), 0);
+        if (game === 'liar') {
+          for (let i = 0; i < 3; i++) await page.locator(`#vote-${i}`).selectOption(String((i + 1) % 3));
+          await page.locator('[data-action="confirm-votes"]').click();
+        } else await page.locator('[data-action="settle"]').click();
+        await page.locator('.word-definitions').waitFor();
+        assert.deepEqual(await page.locator('.word-definitions dt').allTextContents(), words);
+        const meanings = await page.locator('.word-definitions dd > p').allTextContents();
+        assert.deepEqual(meanings, words.map(word => wordDetail(category, word).meaning));
+        assert.ok(await page.locator('.word-definitions a').count() >= words.length);
+        await assertMobileLayouts(page, `${engine} ${category} ${game} meanings`);
+        if (category === 'era90' && game === 'taboo') await screenshot(page, `${engine}-era90-result-mobile`);
+        const totals = (await read(page)).session.totals;
+        await page.reload(); assert.equal((await read(page)).session.round.category, category);
+        assert.deepEqual((await read(page)).session.totals, totals);
+        const nextCategory = Object.keys(ERA_PACKS)[(eraIndex + 1) % 5];
+        await page.locator('#next-category').selectOption(nextCategory);
+        await page.locator('#next-game').selectOption('spy');
+        assert.equal(await page.locator('#next-category').isVisible(), false);
+        await page.locator('#next-game').selectOption('taboo');
+        assert.equal(await page.locator('#next-category').isVisible(), true);
+        assert.equal(await page.locator('#next-category').inputValue(), nextCategory);
+        await page.locator('[data-action="next-round"]').click();
+        const next = (await read(page)).session;
+        assert.equal(next.round.category, nextCategory);
+        next.round.words.forEach(word => assert.ok(WORDS[nextCategory].items.includes(word)));
+        assert.notEqual(await page.locator('#invite-0').inputValue(), oldLink);
+        assert.deepEqual(next.totals, totals);
+        await context.close();
+      }
       // Malformed URLs, XSS-bearing names/payloads, and blocked localStorage.
       const edge = await browser.newContext({ viewport: { width: 320, height: 700 }, deviceScaleFactor: 2, locale: 'ko-KR' });
       const bad = await edge.newPage(); watch(bad); await bad.goto(new URL('card.html#broken', base).href);
@@ -357,7 +418,7 @@ try {
       const blocked = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' });
       await blocked.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Blocked', 'SecurityError'); } }); });
       const blockedPage = await blocked.newPage(); watch(blockedPage); await blockedPage.goto(base); await create(blockedPage, 'taboo'); assert.equal(await blockedPage.locator('#storage-warning').isVisible(), true); await blocked.close();
-      reports.push({ engine, status: 'passed', games: 3, playerCountsFullFlow: [3, 8], playerCountsHostFlow: [3, 4, 5, 6, 7, 8], mobileWidths: [320, 360, 390, 430, 768], desktopWidth: 1280, basePath: '/ggme/', qrDecodedFromRenderedSVG: true, singleInviteNavigation: true, maximumDensityQR: true });
+      reports.push({ engine, status: 'passed', games: 3, playerCountsFullFlow: [3, 8], playerCountsHostFlow: [3, 4, 5, 6, 7, 8], mobileWidths: [320, 360, 390, 430, 768], desktopWidth: 1280, basePath: '/ggme/', qrDecodedFromRenderedSVG: true, singleInviteNavigation: true, maximumDensityQR: true, eraPacks: Object.keys(ERA_PACKS), eraGames: ['liar', 'taboo'], eraMeaningsAfterSettlement: true });
     } finally { await browser.close(); }
   }
   assert.deepEqual(errors, [], 'browser console/page errors'); assert.deepEqual(externalRequests, [], 'unexpected external network requests');
