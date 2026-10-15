@@ -3,6 +3,18 @@ import { escapeHTML } from './ui.js';
 
 export const QR_MARGIN = 4;
 
+export function fitQR(root = document) {
+  const ratio = window.devicePixelRatio || 1;
+  for (const svg of root.querySelectorAll('.invite-qr')) {
+    const available = svg.parentElement.clientWidth;
+    if (!available) continue;
+    const edge = svg.viewBox.baseVal.width;
+    const scale = Math.max(1, Math.floor(available * ratio / edge));
+    svg.setAttribute('width', String(edge * scale / ratio));
+    svg.setAttribute('height', String(edge * scale / ratio));
+  }
+}
+
 // Invite URLs are ASCII: Unicode names live in the Base64URL fragment.
 // Generate locally; no invite data is sent to an image service.
 export function createQR(text) {

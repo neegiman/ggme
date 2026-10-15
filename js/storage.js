@@ -1,7 +1,7 @@
 import { GAME_IDS, RULES_VERSION, validateNames, scoreRound } from './core.js';
-import { personalPayload } from './round.js?v=words-2';
-import { WORDS } from './data.js?v=words-2';
-import { validatePayload } from './links.js';
+import { personalPayload } from './round.js?v=replies-1';
+import { WORDS } from './data.js?v=replies-1';
+import { validatePayload } from './links.js?v=replies-1';
 
 export const STORAGE_KEY = 'three-of-us:local:v1';
 const isScores = (a, count) => Array.isArray(a) && a.length === count && a.every(n => Number.isInteger(n) && n >= 0 && n <= 1000000);
@@ -29,6 +29,10 @@ export function validateStore(value) {
     if (!isScores(s.totals, count)) throw new Error('저장된 점수가 올바르지 않습니다.');
     const r = s.round;
     if (!r || r.playerCount !== count || !isId(r.id) || !Number.isInteger(r.number) || r.number < 1 || r.number > 9999 || !GAME_IDS.includes(r.game) || !Object.hasOwn(WORDS, r.category) || ![120, 180, 240, 300, 420, 600].includes(r.seconds) || !['invite', 'play', 'judge', 'result'].includes(r.phase) || !Array.isArray(r.shared) || r.shared.length !== count || !r.shared.every(b => typeof b === 'boolean')) throw new Error('저장된 라운드를 읽을 수 없습니다.');
+    if (r.replyKeys !== undefined || r.received !== undefined) {
+      const received = r.received;
+      if (r.game === 'taboo' || !Array.isArray(r.replyKeys) || r.replyKeys.length !== count || !r.replyKeys.every(isId) || new Set(r.replyKeys).size !== count || !received || !Array.isArray(received.seen) || received.seen.length > 500 || !received.seen.every(isId) || new Set(received.seen).size !== received.seen.length || !Array.isArray(received.votes) || received.votes.length !== count || ![...received.votes, received.guess].every(id => id === null || (isId(id) && received.seen.includes(id)))) throw new Error('저장된 응답 확인 정보가 올바르지 않습니다.');
+    }
     const t = r.timer;
     if (!t || typeof t.running !== 'boolean' || !Number.isFinite(t.remaining) || t.remaining < 0 || t.remaining > r.seconds * 1000 || (t.running && !Number.isFinite(t.deadline))) throw new Error('저장된 타이머를 읽을 수 없습니다.');
     if (r.game !== 'taboo' && (!Number.isInteger(r.special) || r.special < 0 || r.special >= count || typeof r.secret !== 'string' || !r.secret)) throw new Error('저장된 역할이 올바르지 않습니다.');

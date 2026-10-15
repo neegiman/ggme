@@ -58,7 +58,7 @@ test('rejects missing, malformed, oversized and unknown-version links', () => {
   for (const hash of ['', '#', '#%%%', '#a', '#_'.repeat(6100), '#eyJ2IjoyfQ', '#wyg']) assert.throws(() => decodePayload(hash));
   const p = personalPayload(createSession(['가', '나', '다'], 'spy', 'daily', 240), 0);
   assert.throws(() => validatePayload({ ...p, seed: 'leak' }));
-  assert.throws(() => validatePayload({ ...p, v: 3 }));
+  assert.throws(() => validatePayload({ ...p, v: 4 }));
   assert.throws(() => validatePayload({ ...p, recipient: ' ' }));
   assert.throws(() => validatePayload({ ...p, info: { ...p.info, allRoles: [1, 2, 3] } }));
 });
@@ -90,7 +90,9 @@ test('every supported count creates isolated cards and new links in /ggme/', () 
 test('legacy v1 cards still open; v2 count and private collections are validated', () => {
   for (const game of ['liar', 'spy', 'taboo']) {
     const p = personalPayload(createSession(['가', '나', '다'], game, 'daily', 180), 0);
-    const legacy = { ...p, v: 1 }; delete legacy.count;
+    const v2 = { ...p, v: 2 }; delete v2.roster; delete v2.replyKey;
+    assert.deepEqual(decodePayload(encodePayload(v2)), v2);
+    const legacy = { ...v2, v: 1 }; delete legacy.count;
     assert.deepEqual(decodePayload(encodePayload(legacy)), legacy);
     for (const count of [2, 9, 3.5, '3', null]) assert.throws(() => validatePayload({ ...p, count }));
     assert.throws(() => validatePayload({ ...p, seat: 4 }));

@@ -1,10 +1,12 @@
 import { validateNames, majorityTarget, scoreRound, commitResult, remainingMs, formatTime } from './core.js';
-import { GAMES, WORDS } from './data.js?v=words-2';
-import { DEFAULT_WORD_PACK, ERA_PACKS, WORD_SOURCES, wordDetail } from './vocabulary.js?v=words-2';
-import { createSession, createRound, personalPayload } from './round.js?v=words-2';
-import { makeInvite } from './links.js';
-import { qrSVG } from './qr.js';
-import { loadStore, saveStore, STORAGE_KEY } from './storage.js?v=words-2';
+import { GAMES, WORDS } from './data.js?v=replies-1';
+import { DEFAULT_WORD_PACK, ERA_PACKS, WORD_SOURCES, wordDetail } from './vocabulary.js?v=replies-1';
+import { createSession, createRound, personalPayload } from './round.js?v=replies-1';
+import { makeInvite } from './links.js?v=replies-1';
+import { qrSVG, fitQR } from './qr.js?v=replies-1';
+import { decodeResponse, importResponse } from './responses.js?v=replies-1';
+import { QRReader, scannerMarkup } from './scanner.js?v=replies-1';
+import { loadStore, saveStore, STORAGE_KEY } from './storage.js?v=replies-1';
 import { escapeHTML as e, icon, gameIcon, avatar } from './ui.js';
 
 const main = document.querySelector('#main');
@@ -18,6 +20,7 @@ let toastTimeout;
 let storageDirty = false;
 let inviteSeat = 0;
 let inviteRoundId = null;
+let reader = null;
 
 function toast(message) {
   const node = document.querySelector('#toast');
@@ -30,34 +33,47 @@ function persist() {
   document.querySelector('#history-count').textContent = String(store.archive.length + (store.session?.history.length || 0));
 }
 function showModal(title, html, className = '') {
+  reader?.dispose(); reader = null;
   modal.className = className;
   document.querySelector('#modal-title').textContent = title;
   document.querySelector('#modal-body').innerHTML = html;
   if (!modal.open) modal.showModal();
   fitInviteQR();
 }
-function fitInviteQR() {
-  const ratio = window.devicePixelRatio || 1;
-  for (const svg of document.querySelectorAll('.invite-qr')) {
-    const available = svg.parentElement.clientWidth;
-    if (!available) continue;
-    const edge = svg.viewBox.baseVal.width;
-    // Keep every module an integer number of screen pixels. Fractional modules
-    // can make dense codes unreadable after a phone camera resamples the image.
-    const scale = Math.max(1, Math.floor(available * ratio / edge));
-    const size = edge * scale / ratio;
-    svg.setAttribute('width', String(size));
-    svg.setAttribute('height', String(size));
-  }
-}
-function closeModal() { modal.close(); }
+function fitInviteQR() { fitQR(); }
+function closeModal() { reader?.dispose(); reader = null; modal.close(); }
+modal.addEventListener('cancel', () => { reader?.dispose(); reader = null; });
 modal.addEventListener('close', () => {
+  reader?.dispose(); reader = null;
   // Do not retain the previous person's enlarged QR in the closed dialog.
-  if (modal.classList.contains('qr-dialog')) {
+  if (modal.classList.contains('qr-dialog') || modal.classList.contains('reader-dialog')) {
     document.querySelector('#modal-body').replaceChildren();
     modal.className = '';
   }
 });
+function readResponses() {
+  const r = store.session?.round;
+  if (r?.phase !== 'judge' || !r.replyKeys) throw new Error('이번 라운드의 투표·판정 화면에서 읽어 주세요.');
+  showModal('참가자 응답 QR 읽기', `${scannerMarkup()}<button class="button primary full" data-action="close-modal">입력 확인하러 돌아가기</button>`, 'reader-dialog');
+  reader = new QRReader(document.querySelector('#qr-reader'), code => {
+    const imported = importResponse(store.session, decodeResponse(code));
+    const name = store.session.players[imported.seat];
+    if (imported.status === 'duplicate') return `${name}님의 이미 읽은 응답이에요. 입력은 바꾸지 않았어요.`;
+    persist(); renderRound();
+    const message = imported.type === 'vote' ? `${name}님의 투표를 ${store.session.players[imported.value - 1]}님으로 가져왔어요.` : `${name}님의 추측을 가져왔어요. 입력칸에서 확인한 뒤 판정해 주세요.`;
+    toast(message); return message;
+  });
+}
+function responseProgress() {
+  const s = store.session;
+  return `${s.round.draft.votes.filter(v => v !== '').length} / ${s.players.length}명 투표 입력`;
+}
+function responseTools() {
+  const r = store.session.round;
+  if (r.game === 'taboo') return '';
+  if (!r.replyKeys) return '<p class="notice">기존 라운드는 직접 입력해 주세요. 다음 라운드부터 참가자의 응답 QR을 읽을 수 있어요.</p>';
+  return `<div class="response-collection"><button class="button secondary full" data-action="read-responses">${icon('eye')}참가자 응답 QR 읽기</button><p id="response-progress" class="field-help" role="status">${responseProgress()}</p><p class="field-help">휴대폰의 응답 QR을 읽거나 직접 입력해 주세요. 읽기만으로 투표가 확정되거나 점수가 저장되지는 않아요.</p></div>`;
+}
 function focusMain() { main.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: 'instant' }); }
 function ruleText(game) {
   if (game === 'liar') return '<li>시민들은 같은 단어를, 라이어 1명은 카테고리만 알아요.</li><li>자신을 제외한 한 사람에게 투표해요. 단독 최다 득표자를 지목해요. 최다 득표가 동률이면 라이어가 이겨요.</li><li>라이어가 지목되면 단어를 한 번 추측해요. 정답이면 라이어 승리, 오답이면 시민 승리예요.</li><li>라이어 승리 시 라이어 +3점. 시민 승리 시 시민 각각 +2점. 패자는 0점이에요.</li>';
@@ -68,7 +84,7 @@ function rules(game) {
   showModal(`${GAMES[game].name} 플레이 방법`, `<div class="rule-intro ${game}">${gameIcon(game)}<p>${e(GAMES[game].short)}</p></div><ol class="rules-list">${ruleText(game)}</ol><div class="notice"><strong>임시 규칙 v1</strong><p>요청된 설계서 원문을 확인하기 전의 플레이 규칙입니다. 원문 규칙과의 일치는 아직 검증되지 않았어요.</p></div>${game !== 'taboo' ? '<p class="subtle">단어·장소 정답은 공백과 영문 대소문자를 제외하고 정확히 비교해요. 동의어는 자동 인정하지 않아요.</p>' : ''}<button class="button primary full" data-action="close-modal">알겠어요</button>`);
 }
 function renderHome(moveFocus = false) {
-  main.innerHTML = `<section class="hero"><div class="hero-copy"><span class="eyebrow">C:\\GGME&gt; START</span><span class="pill"><span class="tiny-dot"></span>3~8명이 모이면, 준비 끝</span><h1>우리 중,<br><span>누가 비밀을 숨길까?</span></h1><p>휴대폰에는 나만의 비밀을.<br>테이블 위에는 끝없는 의심을.</p><div class="hero-meta"><span>${icon('people')}3~8명 선택</span><span>${icon('clock')}한 판 2–10분</span><span>${icon('chat')}같은 자리에서</span></div></div><div class="terminal-output" aria-hidden="true"><div class="terminal-output-head">C:\\GGME\\SYSTEM &nbsp; [MANUAL MODE]</div><div class="terminal-output-body"><p>GGME [Version 0.4.0]</p><p class="terminal-muted">SOCIAL DEDUCTION / 3–8 PLAYERS</p><div class="terminal-divider"></div><div class="terminal-menu"><span>[01]</span><span>LIAR.EXE</span><span>라이어</span></div><div class="terminal-menu"><span>[02]</span><span>SPY.EXE</span><span>스파이</span></div><div class="terminal-menu"><span>[03]</span><span>TABOO.EXE</span><span>금지어</span></div><div class="terminal-divider"></div><p class="terminal-muted">비밀 카드는 각자의 화면에.</p><p class="terminal-muted">진행은 생성자가, 대화는 함께.</p><p class="terminal-prompt">C:\\GGME&gt;<span class="terminal-cursor"></span></p></div></div></section>
+  main.innerHTML = `<section class="hero"><div class="hero-copy"><span class="eyebrow">C:\\GGME&gt; START</span><span class="pill"><span class="tiny-dot"></span>3~8명이 모이면, 준비 끝</span><h1>우리 중,<br><span>누가 비밀을 숨길까?</span></h1><p>휴대폰에는 나만의 비밀을.<br>테이블 위에는 끝없는 의심을.</p><div class="hero-meta"><span>${icon('people')}3~8명 선택</span><span>${icon('clock')}한 판 2–10분</span><span>${icon('chat')}같은 자리에서</span></div></div><div class="terminal-output" aria-hidden="true"><div class="terminal-output-head">C:\\GGME\\SYSTEM &nbsp; [MANUAL MODE]</div><div class="terminal-output-body"><p>GGME [Version 0.5.0]</p><p class="terminal-muted">SOCIAL DEDUCTION / 3–8 PLAYERS</p><div class="terminal-divider"></div><div class="terminal-menu"><span>[01]</span><span>LIAR.EXE</span><span>라이어</span></div><div class="terminal-menu"><span>[02]</span><span>SPY.EXE</span><span>스파이</span></div><div class="terminal-menu"><span>[03]</span><span>TABOO.EXE</span><span>금지어</span></div><div class="terminal-divider"></div><p class="terminal-muted">비밀 카드는 각자의 화면에.</p><p class="terminal-muted">진행은 생성자가, 대화는 함께.</p><p class="terminal-prompt">C:\\GGME&gt;<span class="terminal-cursor"></span></p></div></div></section>
     <form id="create-form" novalidate>
       <section class="game-section"><div class="section-heading"><div><span class="step-number">01</span><h2>오늘은 어떤 게임?</h2></div><span class="section-caption">하나를 골라 주세요</span></div><div class="game-grid">${Object.entries(GAMES).map(([id, game], i) => `<label class="game-choice"><input type="radio" name="game" value="${id}" ${setup.game === id ? 'checked' : ''}><span class="game-card ${id}"><span class="game-card-top"><span class="game-symbol">${gameIcon(id)}</span><span class="choice-indicator">${icon('check')}</span></span><span class="eyebrow">0${i + 1} / ${game.en}</span><strong>${game.name}</strong><span class="game-description">${e(game.description).replace(/\n/g, '<br> ')}</span><span class="game-card-bottom"><span>${game.tag}</span><span>${game.time / 60} MIN ${icon('arrow')}</span></span></span></label>`).join('')}</div><button type="button" class="text-button rule-link" data-action="selected-rules">${icon('info')}선택한 게임의 규칙 보기</button></section>
       <section class="panel setup-panel"><div class="player-setup"><div class="section-heading"><div><span class="step-number">02</span><h2>함께할 사람들</h2></div></div><p class="section-description">생성자도 참가할 수 있어요. 서로 다른 이름을 입력해 주세요.</p><label class="select-label count-label" for="player-count">참가 인원<select id="player-count" name="playerCount">${Array.from({ length: 6 }, (_, i) => i + 3).map(n => `<option value="${n}" ${setup.playerCount === n ? 'selected' : ''}>${n}명</option>`).join('')}</select></label><div class="player-fields" id="player-fields">${Array.from({ length: setup.playerCount }, (_, i) => i).map(i => `<label><span class="input-label"><span class="seat-dot seat-${i}">${i + 1}</span>참가자 ${i + 1}</span><input id="player-${i}" name="player-${i}" type="text" autocomplete="off" maxlength="24" placeholder="이름 또는 닉네임" value="${e(setup.names[i])}" aria-describedby="name-help form-error" required></label>`).join('')}</div><p id="name-help" class="field-help">이름은 1~12자 · 같은 이름은 사용할 수 없어요</p><p id="form-error" class="form-error" role="alert" hidden></p></div><div class="game-settings"><div class="settings-heading">${icon('clock')}라운드 설정</div><label class="select-label" for="duration">대화 시간<select id="duration" name="duration">${durationOptions(setup.seconds)}</select></label><label class="select-label" id="category-label" for="category" ${setup.game === 'spy' ? 'hidden' : ''}>시대별 단어 · 기본 단어<select id="category" name="category">${categoryOptions(setup.category)}</select></label><p class="field-help" id="word-pack-note">${e(packDescription(setup.game, setup.category))}</p><p class="field-help" id="era-note" ${setup.game === 'spy' ? 'hidden' : ''}>1960~2020년대의 사용 시기예요.<br>60~80년대는 시대어·추억말도 포함해요.</p><button type="button" class="text-button word-info-button" data-action="word-sources">단어 자료·선정 기준 보기</button><p class="field-help">시간이 끝나면 생성자가 직접 판정해요.</p></div></section>
@@ -153,9 +169,9 @@ function judgeScreen() {
     body = `<span class="eyebrow">ONE LAST CHANCE</span><h2>${e(s.players[target])}님의 마지막 추측</h2><p class="section-description">지목된 참가자가 말한 단어를 그대로 입력해 주세요. 모르거나 포기하면 ‘모름’을 입력하세요.</p><div class="vote-summary">${s.players.map((name, i) => `<p><span>${e(name)}</span>${icon('arrow')}<strong>${e(s.players[d.votes[i]])}</strong></p>`).join('')}</div><label class="select-label" for="guess">마지막 단어 추측<input id="guess" data-draft="guess" maxlength="80" autocomplete="off" placeholder="참가자가 말한 단어" value="${e(d.guess)}"></label><p class="field-help">공백·영문 대소문자를 제외하고 정확히 비교해요. 동의어는 자동 인정하지 않아요.</p><button class="button primary full" data-action="settle">판정 및 점수 저장${icon('check')}</button><button class="text-button full" data-action="unlock-votes">투표 입력 수정하기</button>`;
   } else {
     const early = r.game === 'spy' && d.earlyGuess;
-    body = `<h2>모두의 선택을 기록해요</h2><p class="section-description">먼저 동시에 지목한 뒤, 생성자가 입력해 주세요. 입력 내용은 상대 기기로 전송되지 않아요.</p>${r.game === 'spy' ? `<label class="early-guess"><input type="checkbox" data-draft="earlyGuess" ${early ? 'checked' : ''}><span>스파이가 투표 전에 장소를 추측했어요</span></label>` : ''}${early ? `<div class="notice"><p>스파이가 말한 장소를 입력해 주세요. 정답·오답에 따라 즉시 승패를 판정해요.</p></div><label class="select-label" for="guess">스파이의 장소 추측<input id="guess" data-draft="guess" maxlength="80" autocomplete="off" placeholder="스파이가 말한 장소" value="${e(d.guess)}"></label><p class="field-help">장소 추측은 한 번뿐이에요. 공백·영문 대소문자를 제외하고 정확히 비교해요.</p>` : `<div class="vote-fields">${s.players.map((name, i) => `<label class="vote-field" for="vote-${i}">${avatar(name, i)}<span><strong>${e(name)}</strong>님의 투표</span><select id="vote-${i}" data-vote="${i}"><option value="">누구를 지목했나요?</option>${s.players.map((target, j) => j === i ? '' : `<option value="${j}" ${d.votes[i] === j ? 'selected' : ''}>${e(target)}</option>`).join('')}</select></label>`).join('')}</div><p class="field-help">단독 최다 득표자 지목 · 최다 득표 동률이면 ${r.game === 'liar' ? '라이어' : '스파이'} 승리</p>`}<button class="button primary full" data-action="confirm-votes">${early ? '장소 추측 판정 및 점수 저장' : '투표 확정'}${icon('arrow')}</button>`;
+    body = `<h2>모두의 선택을 기록해요</h2><p class="section-description">참가자의 응답 QR을 읽거나, 동시에 지목한 내용을 직접 입력해 주세요. 생성자가 투표를 확정해요.</p>${r.game === 'spy' ? `<label class="early-guess"><input type="checkbox" data-draft="earlyGuess" ${early ? 'checked' : ''}><span>스파이가 투표 전에 장소를 추측했어요</span></label>` : ''}${early ? `<div class="notice"><p>스파이가 말한 장소를 입력해 주세요. 정답·오답에 따라 즉시 승패를 판정해요.</p></div><label class="select-label" for="guess">스파이의 장소 추측<input id="guess" data-draft="guess" maxlength="80" autocomplete="off" placeholder="스파이가 말한 장소" value="${e(d.guess)}"></label><p class="field-help">장소 추측은 한 번뿐이에요. 공백·영문 대소문자를 제외하고 정확히 비교해요.</p>` : `<div class="vote-fields">${s.players.map((name, i) => `<label class="vote-field" for="vote-${i}">${avatar(name, i)}<span><strong>${e(name)}</strong>님의 투표${r.received?.votes[i] ? '<small class="qr-input-tag">QR 입력</small>' : ''}</span><select id="vote-${i}" data-vote="${i}"><option value="">누구를 지목했나요?</option>${s.players.map((target, j) => j === i ? '' : `<option value="${j}" ${d.votes[i] === j ? 'selected' : ''}>${e(target)}</option>`).join('')}</select></label>`).join('')}</div><p class="field-help">단독 최다 득표자 지목 · 최다 득표 동률이면 ${r.game === 'liar' ? '라이어' : '스파이'} 승리</p>`}<button class="button primary full" data-action="confirm-votes">${early ? '장소 추측 판정 및 점수 저장' : '투표 확정'}${icon('arrow')}</button>`;
   }
-  return `<section class="judge-container"><div class="panel judge-panel">${body}<p id="judge-error" class="form-error" role="alert" hidden></p></div><div class="judge-aside">${icon('people')}<h3>마지막까지 공정하게</h3><p>판정을 저장하면 결과와 비밀 정보가 공개되고 통산 점수에 한 번만 반영돼요.</p><button class="text-button" data-action="rules">규칙 다시 보기${icon('arrow')}</button><span class="rules-tag">임시 규칙 v1 적용</span></div></section><div class="round-actions"><button class="button secondary" data-action="back-play">대화 화면으로 돌아가기</button></div>`;
+  return `<section class="judge-container"><div class="panel judge-panel">${responseTools()}${body}${r.received?.guess ? '<p class="field-help qr-input-tag" id="guess-source">추측을 응답 QR에서 가져왔어요. 입력값을 확인해 주세요.</p>' : ''}<p id="judge-error" class="form-error" role="alert" hidden></p></div><div class="judge-aside">${icon('people')}<h3>마지막까지 공정하게</h3><p>판정을 저장하면 결과와 비밀 정보가 공개되고 통산 점수에 한 번만 반영돼요.</p><button class="text-button" data-action="rules">규칙 다시 보기${icon('arrow')}</button><span class="rules-tag">임시 규칙 v1 적용</span></div></section><div class="round-actions"><button class="button secondary" data-action="back-play">대화 화면으로 돌아가기</button></div>`;
 }
 function resultScreen() {
   const s = store.session, r = s.round, result = r.result;
@@ -220,12 +236,13 @@ function newGroup() {
   showModal('새 멤버로 시작할까요?', `<p>${store.session.round.result ? '완료된 플레이 기록은 보관하고, 참가자와 통산 점수를 새로 설정해요.' : '진행 중인 라운드는 점수를 반영하지 않고 종료해요. 이미 보낸 링크는 계속 열 수 있으므로 참가자에게 종료를 알려 주세요. 완료된 기록은 보관해요.'}</p><div class="modal-actions"><button class="button secondary" data-action="close-modal">계속 플레이</button><button class="button primary" data-action="confirm-new-group">새로 시작</button></div>`);
 }
 const actions = {
+  'read-responses': readResponses,
   'close-modal': closeModal,
   'selected-rules': () => rules(setup.game),
   'word-sources': wordSources,
   rules: () => rules(store.session.round.game),
   history,
-  guide: () => showModal('우리의 게임 나이트', `<ol class="rules-list"><li>생성자가 게임을 고르고 참가자 3~8명의 이름을 등록해요.</li><li>각자에게 다른 개인 링크를 보내요. 생성자도 참가한다면 본인 링크만 열어요.</li><li>개인 카드를 확인하고 함께 대화해요. 생성자는 타이머를 진행해요.</li><li>투표·금지어 위반을 직접 확인한 뒤 생성자가 판정해요.</li><li>결과와 통산 점수는 생성자의 이 브라우저에 저장돼요.</li></ol><div class="notice"><strong>서버 없이, 직접 진행해요.</strong><p>참가자의 접속, 카드 확인, 타이머, 투표는 기기 간 자동 공유되지 않아요. 이전 링크를 만료시키거나 회수할 수 없어요.</p></div><p class="subtle">링크는 비밀번호나 암호화된 인증 수단이 아니에요. 카드 정보가 주소에 담겨 있으니 해당 참가자에게만 전달하세요. 생성자 브라우저에는 전체 배정 정보가 있어요.</p><p class="subtle">현재 승패·점수는 설계서 확인 전 임시 규칙 v1입니다.</p><button class="button primary full" data-action="close-modal">시작해 볼까요</button>`),
+  guide: () => showModal('우리의 게임 나이트', `<ol class="rules-list"><li>생성자가 게임을 고르고 참가자 3~8명의 이름을 등록해요.</li><li>각자에게 다른 개인 링크·QR을 전달해요. 생성자도 참가한다면 본인 링크만 열어요.</li><li>개인 카드를 확인하고 함께 대화해요. 생성자는 타이머를 진행해요.</li><li>라이어·스파이의 참가자는 휴대폰에서 투표를 입력하고 응답 QR을 보여 줘요. 추측은 비밀 카드를 연 뒤 ‘정답 추측 입력’에서 만들어요.</li><li>생성자는 판정 화면의 ‘참가자 응답 QR 읽기’로 한 명씩 가져와 확인·확정해요. 직접 입력도 가능하고 금지어 위반은 합의한 횟수를 기록해요.</li><li>결과와 통산 점수는 생성자의 이 브라우저에 저장돼요.</li></ol><div class="notice"><strong>서버 없이, 직접 진행해요.</strong><p>응답 QR을 생성자가 읽어야 전달돼요. 참가자의 접속, 카드 확인, 타이머, 투표는 기기 간 자동 공유되지 않아요. 이전 링크를 만료시키거나 회수할 수 없어요.</p></div><p class="subtle">링크는 비밀번호나 암호화된 인증 수단이 아니에요. 카드 정보가 주소에 담겨 있으니 해당 참가자에게만 전달하세요. 생성자 브라우저에는 전체 배정 정보가 있어요.</p><p class="subtle">현재 승패·점수는 설계서 확인 전 임시 규칙 v1입니다.</p><button class="button primary full" data-action="close-modal">시작해 볼까요</button>`),
   copy: button => copyLink(Number(button.dataset.seat)),
   'invite-prev': () => moveInvite(-1),
   'invite-next': () => moveInvite(1),
@@ -261,9 +278,9 @@ const actions = {
     const r = store.session.round;
     if (r.game === 'spy' && r.draft.earlyGuess) return settle();
     const target = majorityTarget(r.draft.votes);
-    if (r.game === 'liar' && target !== null) { r.votesLocked = true; persist(); renderRound(true); } else settle();
+    if (r.game === 'liar' && target === r.special) { r.votesLocked = true; persist(); renderRound(true); } else settle();
   },
-  'unlock-votes': () => { store.session.round.votesLocked = false; persist(); renderRound(true); },
+  'unlock-votes': () => { const r = store.session.round; r.votesLocked = false; r.draft.guess = ''; if (r.received) r.received.guess = null; persist(); renderRound(true); },
   settle,
   'next-round': () => {
     const s = store.session, r = s.round;
@@ -340,11 +357,18 @@ document.addEventListener('change', event => {
     document.querySelector('[data-action="start"]').disabled = !r.shared.every(Boolean);
     document.querySelector('#invite-progress').textContent = `${r.shared.filter(Boolean).length} / ${r.shared.length}명 카드 확인 완료`;
   }
-  if (input.dataset.vote !== undefined) { store.session.round.draft.votes[Number(input.dataset.vote)] = input.value === '' ? '' : Number(input.value); persist(); }
+  if (input.dataset.vote !== undefined) {
+    const r = store.session.round, seat = Number(input.dataset.vote);
+    r.draft.votes[seat] = input.value === '' ? '' : Number(input.value);
+    if (r.received) r.received.votes[seat] = null;
+    input.closest('label')?.querySelector('.qr-input-tag')?.remove();
+    const progress = document.querySelector('#response-progress'); if (progress) progress.textContent = responseProgress();
+    persist();
+  }
   if (input.dataset.draft === 'earlyGuess') { store.session.round.draft.earlyGuess = input.checked; persist(); renderRound(); }
 });
 document.addEventListener('input', event => {
-  if (event.target.dataset.draft === 'guess') { store.session.round.draft.guess = event.target.value; persist(); }
+  if (event.target.dataset.draft === 'guess') { const r = store.session.round; r.draft.guess = event.target.value; if (r.received) r.received.guess = null; document.querySelector('#guess-source')?.remove(); persist(); }
   if (event.target.name?.startsWith('player-')) { setup.names[Number(event.target.name.slice(-1))] = event.target.value; const error = document.querySelector('#form-error'); if (error) error.hidden = true; }
 });
 document.addEventListener('visibilitychange', updateTimer);

@@ -479,6 +479,26 @@ dialog::backdrop { background: var(--surface); backdrop-filter: blur(5px); }
 }
 
 
+/* Offline response collection. */
+.response-panel { margin: 24px 0; padding: 22px; min-width: 0; }
+.response-panel h2 { font-size: 19px; margin-bottom: 10px; }
+.response-panel > p, #qr-reader > p { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.response-panel .select-label { margin-block: 18px; }
+.response-panel .qr-frame { margin-block: 20px; }
+.response-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 16px; }
+.response-actions .button { flex: 1 1 160px; }
+.response-collection { border-bottom: 1px dashed var(--line); padding-bottom: 20px; margin-bottom: 24px; }
+.qr-input-tag { display: block; font-size: 11px; color: var(--muted); }
+.reader-dialog { width: min(680px, calc(100% - 32px)); }
+.scan-video { display: block; width: 100%; max-height: 300px; aspect-ratio: 4 / 3; object-fit: contain; background: #000; border: 1px solid var(--line); margin-top: 16px; }
+.scan-status { padding: 12px; border: 1px solid var(--line); min-height: 48px; }
+.scan-status.scan-error { border-style: dashed; }
+#qr-reader .select-label { margin-block: 18px 8px; }
+#scan-file { width: 100%; min-width: 0; min-height: 48px; font-size: 12px; padding: 7px; }
+#scan-file::file-selector-button { min-height: 32px; font: inherit; margin-right: 8px; }
+.response-panel textarea, #qr-reader textarea { display: block; width: 100%; resize: vertical; }
+@media (max-width: 640px) { .response-panel { padding: 16px; } }
+
 /* CMD shell: square frames, phosphor text, explicit input and selection states. */
 ::selection { background: var(--ink); color: #000; }
 body { letter-spacing: 0; }

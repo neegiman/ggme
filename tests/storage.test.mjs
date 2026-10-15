@@ -48,7 +48,8 @@ test('legacy v0 sessions and completed history migrate without changing scores o
 });
 test('saved results are recomputed on restore and cannot be awarded a second time', () => {
   const storage = memory(), value = state();
-  value.session.round = { ...value.session.round, game: 'taboo', words: ['진짜', '아니', '근데'] };
+  value.session = createSession(['가', '나', '다'], 'taboo', 'daily', 180);
+  value.session.round.words = ['진짜', '아니', '근데'];
   const decision = { violations: [1, 2, 0] };
   value.session = commitResult(value.session, scoreRound(value.session.round, decision), decision);
   saveStore(storage, value);

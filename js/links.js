@@ -1,4 +1,4 @@
-import { cleanName, GAME_IDS, validatePlayerCount } from './core.js';
+import { cleanName, GAME_IDS, validatePlayerCount, validateNames } from './core.js';
 
 function exactKeys(object, keys) {
   return object && typeof object === 'object' && !Array.isArray(object) && Object.keys(object).length === keys.length && keys.every(k => Object.hasOwn(object, k));
@@ -10,8 +10,10 @@ export function validatePayload(p) {
   const count = p?.v === 1 ? 3 : p?.count;
   validatePlayerCount(count);
   const keys = ['v', 'roundId', 'round', 'game', 'recipient', 'seat', 'info'];
-  if (p?.v === 2) keys.push('count');
-  if (!exactKeys(p, keys) || ![1, 2].includes(p.v) || !/^[a-f0-9]{24}$/.test(p.roundId) || !Number.isInteger(p.round) || p.round < 1 || p.round > 9999 || !GAME_IDS.includes(p.game) || !Number.isInteger(p.seat) || p.seat < 1 || p.seat > count || cleanName(p.recipient) !== p.recipient) throw new Error('올바르지 않은 개인 카드 링크입니다.');
+  if ([2, 3].includes(p?.v)) keys.push('count');
+  if (p?.v === 3) keys.push('roster', 'replyKey');
+  if (!exactKeys(p, keys) || ![1, 2, 3].includes(p.v) || !/^[a-f0-9]{24}$/.test(p.roundId) || !Number.isInteger(p.round) || p.round < 1 || p.round > 9999 || !GAME_IDS.includes(p.game) || !Number.isInteger(p.seat) || p.seat < 1 || p.seat > count || cleanName(p.recipient) !== p.recipient) throw new Error('올바르지 않은 개인 카드 링크입니다.');
+  if (p.v === 3 && (p.game === 'taboo' || !Array.isArray(p.roster) || p.roster.length !== count || validateNames(p.roster).some((name, i) => name !== p.roster[i]) || p.roster[p.seat - 1] !== p.recipient || typeof p.replyKey !== 'string' || !/^[a-f0-9]{24}$/.test(p.replyKey))) throw new Error('참가자 목록이나 응답 확인 코드가 올바르지 않습니다.');
   const i = p.info;
   let valid = false;
   if (p.game === 'liar') valid = i?.role === 'liar' ? exactKeys(i, ['role', 'category']) && shortText(i.category) : i?.role === 'citizen' && exactKeys(i, ['role', 'category', 'word']) && shortText(i.category) && shortText(i.word);
