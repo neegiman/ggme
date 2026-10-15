@@ -1,4 +1,4 @@
-import { ERA_WORDS } from './vocabulary.js';
+import { ERA_WORDS } from './vocabulary.js?v=words-2';
 
 export const GAMES = {
   liar: { name: '라이어 게임', en: 'THE LIAR', accent: 'peach', tag: '눈치와 연기', time: 180, description: '같은 단어를 아는 우리.\n아는 척하는 한 사람.', short: '비밀 단어를 모르는 한 사람을 찾아보세요.', steps: ['한 명씩 비밀 단어를 직접 말하지 않고 설명해요.', '서로 질문하며 라이어를 찾아요.', '동시에 지목하고 생성자가 투표를 기록해요.'] },

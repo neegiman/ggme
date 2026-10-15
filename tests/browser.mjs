@@ -8,7 +8,7 @@ import { scoreRound } from '../js/core.js';
 import { decodePayload, encodePayload } from '../js/links.js';
 import { decodeRaster } from './qr-helper.mjs';
 import { WORDS } from '../js/data.js';
-import { ERA_PACKS, DEFAULT_WORD_PACK, wordDetail } from '../js/vocabulary.js';
+import { ERA_PACKS, ERA_WORDS, WORD_SOURCES, DEFAULT_WORD_PACK, wordDetail } from '../js/vocabulary.js';
 
 const require = createRequire(import.meta.url);
 const playwright = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -72,7 +72,11 @@ async function create(page, game, count = 3, category) {
   await page.locator('#player-count').selectOption(String(count));
   for (const [i, name] of ['민지', '준호', '서연', '지수', '도윤', '하린', '유진', '지호'].slice(0, count).entries()) await page.locator(`#player-${i}`).fill(name);
   await page.locator('#duration').selectOption('120');
-  if (category) await page.locator('#category').selectOption(category);
+  if (category) {
+    await page.locator('#category').selectOption(category);
+    const description = await page.locator('#word-pack-note').innerText();
+    ERA_WORDS.eraMixed.items.forEach(word => assert.ok(!description.includes(word), `setup leaks ${word}`));
+  }
   await page.getByRole('button', { name: '게임 만들기', exact: true }).click();
   await page.locator('#invite-0').waitFor();
 }
@@ -337,12 +341,11 @@ try {
         assert.equal(await page.locator('#category').inputValue(), DEFAULT_WORD_PACK);
         if (eraIndex === 0 && game === 'liar') {
           await page.locator('[data-action="word-sources"]').click();
-          assert.equal(await page.locator('.word-pack-overview > p').count(), 5);
+          assert.equal(await page.locator('.word-pack-overview > p').count(), 7);
           assert.match(await page.locator('#modal-body').innerText(), /사용·문화 시기/);
-          for (const link of await page.locator('.word-source-list a').all()) {
-            assert.equal(new URL(await link.getAttribute('href')).protocol, 'https:');
-            assert.equal(await link.getAttribute('rel'), 'noopener noreferrer');
-          }
+          assert.equal(await page.locator('.word-source-list a').count(), 0);
+          const criteria = await page.locator('#modal-body').innerText();
+          ERA_WORDS.eraMixed.items.forEach(word => assert.ok(!criteria.includes(word), `criteria leaks ${word}`));
           await assertMobileLayouts(page, `${engine} word sources`);
           await screenshot(page, `${engine}-word-sources-mobile`, false);
           await page.locator('dialog [data-action="close-modal"]').last().click();
@@ -366,12 +369,22 @@ try {
         const meanings = await page.locator('.word-definitions dd > p').allTextContents();
         assert.deepEqual(meanings, words.map(word => wordDetail(category, word).meaning));
         assert.ok(await page.locator('.word-definitions a').count() >= words.length);
+        if (eraIndex === 0 && game === 'liar') {
+          await page.locator('[data-action="word-sources"]').click();
+          assert.equal(await page.locator('.word-source-list a').count(), Object.keys(WORD_SOURCES).length);
+          for (const link of await page.locator('.word-source-list a').all()) {
+            assert.equal(new URL(await link.getAttribute('href')).protocol, 'https:');
+            assert.equal(await link.getAttribute('rel'), 'noopener noreferrer');
+          }
+          await assertMobileLayouts(page, `${engine} completed round sources`);
+          await page.locator('dialog [data-action="close-modal"]').last().click();
+        }
         await assertMobileLayouts(page, `${engine} ${category} ${game} meanings`);
         if (category === 'era90' && game === 'taboo') await screenshot(page, `${engine}-era90-result-mobile`);
         const totals = (await read(page)).session.totals;
         await page.reload(); assert.equal((await read(page)).session.round.category, category);
         assert.deepEqual((await read(page)).session.totals, totals);
-        const nextCategory = Object.keys(ERA_PACKS)[(eraIndex + 1) % 5];
+        const nextCategory = Object.keys(ERA_PACKS)[(eraIndex + 1) % Object.keys(ERA_PACKS).length];
         await page.locator('#next-category').selectOption(nextCategory);
         await page.locator('#next-game').selectOption('spy');
         assert.equal(await page.locator('#next-category').isVisible(), false);

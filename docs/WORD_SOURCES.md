@@ -1,21 +1,28 @@
 # 시대별 단어 자료와 선정 기준
 
-자료 확인: 2026-10-12, 기능 검증: 2026-10-16. 앱 데이터: `js/vocabulary.js`.
+자료·기능 확인: 2026-10-16. 앱 데이터: `js/vocabulary.js`.
 
 ## 분류 기준
 
-- 60·70·80·90·00은 **1960~2000년대의 사용·문화 시기**다. 출생 연도별 세대 분류가 아니다.
-- 시대별 12개, 총 60개를 수작업으로 선정했다. 모두 섞기는 다섯 묶음의 합집합이다.
-- 60~80년대는 시대어·학교·생활·대중문화의 추억말을 포함한다. 90·00년대는 당시 자료에 실린 통신·인터넷 표현을 중심으로 골랐다.
+- 1960·1970·1980·1990·2000·2010·2020년대는 **사용·문화 시기**다. 출생 연도별 세대 분류가 아니다.
+- 7개 시대별 30개씩, 총 210개를 수작업으로 선정했다. 모두 섞기는 일곱 묶음의 합집합이다.
+- 60~80년대는 시대어·학교·생활·대중문화의 추억말을 포함한다. 1990년대 이후는 통신·인터넷과 일상 표현을 중심으로 골랐다. 2010·2020년대 단어는 우리말샘의 뜻과 용례를 개별 확인했다.
 - 이는 게임용 편집 분류이며 국립국어원의 공식 세대 분류나 세대별 이해도 통계가 아니다. 어떤 단어가 그 시대에 처음 생겼다거나 그 세대만 이해한다고 주장하지 않는다.
 - 국립국어원 신어 조사는 1994년부터 시작했다. 신어 조사에 수록된 연도와 최초 사용·유행 연도는 다를 수 있다. 문헌 출현, 사용 추이, 문화 맥락을 구별해 참고했다.
 - 2015년 자료의 분석 구간은 1956~1964, 1965~1974, 1975~1984, 1985~1994처럼 연대를 걸친다. 게임의 10년 단위 묶음에 편집해 넣었으며 정확한 유행 연도 판정에 쓰지 않는다.
 - 1970년대 미팅 표현의 참고 자료도 1970~80년대를 함께 언급한다. 앞뒤 시대의 사용을 배제하지 않는다. 알바·강퇴 등 00년대 묶음의 말도 그 이전부터 쓰였을 수 있다.
 - 사전·논문의 원문 뜻풀이와 용례 전체를 복제하지 않았다. 아래 뜻은 자료의 문맥과 일반적인 뜻을 바탕으로 작성한 게임용 요약이다. 다의어는 게임에서 사용할 뜻을 명시했다. 예: 90년대 통장은 은행 통장이 아니라 통신 장애를 가리킨다.
+- 시대별 소개에는 정답 후보나 예시를 넣지 않는다. 시작 전 선정 기준 창에는 시대·단어 수·일반 기준만 표시한다. 단어 이름이 포함될 수 있는 상세 참고 문헌과 뜻풀이는 결과 화면에서만 표시한다.
+- 우리말샘 링크는 단순한 동음이의어 검색 결과가 아니라 게임에 사용하는 뜻의 sense_no를 확인해 연결했다. 예: 불금은 불타는 금요일, 돌직구는 직설적인 말, 아바타는 가상 공간의 캐릭터 뜻이다.
+- 일부 2020년대 묶음의 표현도 그 이전에 쓰이기 시작했다. 이는 최초 발생 시기를 단정하는 분류가 아니라 해당 시대에도 사용된 맥락을 참고한 분류다.
 - 국립국어원 자료를 중심으로 조사하고 청년문화·패션의 맥락은 대한민국역사박물관과 한국학중앙연구원 자료로 보완했다.
 
 ## 참고 자료
 
+- **[opendict] [국립국어원 · 우리말샘](https://opendict.korean.go.kr/)** — 표제어의 뜻과 용례를 참고했습니다. 이번 판 단어의 결과에는 해당 뜻의 개별 원문 링크를 제공합니다.
+- **[new2009] [국립국어원 · 2009년 신어 자료집](https://www.korean.go.kr/front/reportData/reportDataView.do?mn_id=207&report_seq=1096)** — 2000년대 온라인 표현과 신어의 사용 맥락을 참고했습니다.
+- **[new2013] [국립국어원 · 2013년 신어 자료집](https://www.korean.go.kr/front/reportData/reportDataView.do?mn_id=207&report_seq=1099)** — 2010년대 신어와 인터넷 표현의 사용 맥락을 참고했습니다.
+- **[music2015] [국립국어원 · 광복 70주년 학술 자료집, 대중가요의 변천 (2015)](https://www.korean.go.kr/common/download.do?c_file_name=195dbae9-4a90-4466-a7fa-4b1109162d97_0.pdf&file_path=reportData&o_file_name=2015.pdf#page=156)** — 「불러보자 귀국선, 춤춰보자 강남스타일」의 1970년대 음악과 청년문화 맥락을 참고했습니다.
 - **[history] [국립국어원 · 광복 70주년 학술 자료집 (2015)](https://www.korean.go.kr/common/download.do?c_file_name=195dbae9-4a90-4466-a7fa-4b1109162d97_0.pdf&file_path=reportData&o_file_name=2015.pdf)** — 「핵심어로 본 시대상의 변화」 37~40·48쪽. 신문 어휘의 사용 추이를 참고했습니다.
 - **[chat1999] [국립국어연구원 · 컴퓨터 대화방의 언어 (1999)](https://www.korean.go.kr/nkview/nknews/199909/14_5.htm)** — 당시 통신어의 표기와 뜻을 확인했습니다. 현재 국립국어원의 전신 기관 자료입니다.
 - **[online2005] [국립국어원 · 우리말 다듬기 사이트의 운영 내용 및 성과 (2005)](https://www.korean.go.kr/nkview/nklife/2005_1/2005_0103.pdf#page=14)** — 『새국어생활』 15권 1호, 박용찬, 50쪽의 신세대 언어와 주석을 참고했습니다.
@@ -26,9 +33,9 @@
 - **[survey] [국립국어원 20년사 · 신어 조사](https://www.korean.go.kr/niklintro2/20years05_03_02.jsp)** — 1994년 신어 조사 시작과 조사어가 곧 최초 발생 연도를 뜻하지 않는다는 점을 확인했습니다.
 - **[yearbook2005] [국립국어원 · 2005 국어 연감, 국어 정책](https://www.korean.go.kr/nkview/kyear/2005/2005_01.html)** — 얼짱 등 당시 신어의 쓰임을 참고했습니다.
 
-## 60년대 · 시대어
+## 1960년대
 
-학교·방송·생활의 옛말과 당시 사회적 표현
+해당 시기의 생활과 문화에서 쓰인 표현을 모았어요.
 
 | 단어 | 게임용 뜻 요약 | 참고 자료 |
 | --- | --- | --- |
@@ -44,10 +51,28 @@
 | 고자세 | 상대를 아래로 보며 거만하게 대하는 태도. | vogue |
 | 자의반 타의반 | 자기 뜻과 남의 뜻이 반씩 섞여 일을 하게 됨. | vogue |
 | 시행착오 | 직접 해 보고 잘못을 고치며 방법을 찾는 과정. | vogue |
+| 중학 | 중학교를 줄여 이르던 말. | history |
+| 합승택시 | 서로 다른 손님을 함께 태워 가던 택시. | history |
+| 판잣집 | 널빤지로 벽을 이어 세운 집. | history |
+| 내핍 | 가난하고 부족한 형편을 참고 견디는 일. | history |
+| 권투 | 장갑을 낀 주먹으로 상대와 겨루는 운동. | history |
+| 보세 | 수입품의 관세 부과를 잠시 미루는 제도. | history |
+| 개간 | 황무지를 일구어 경작할 땅으로 만드는 일. | history |
+| 방첩 | 간첩 활동을 막는 일. | history |
+| 외자 | 외국에서 들여온 자본. | history |
+| 노임 | 노동한 대가로 받는 돈. | history |
+| 프로판 | 취사나 난방에 쓰는 가연성 가스. | history |
+| 석탄 | 연료로 쓰는 검은빛의 광물. | history |
+| 원유 | 땅속에서 채취해 아직 정제하지 않은 석유. | history |
+| 섬유 | 옷감 등을 만드는 가늘고 긴 실 모양의 물질. | history |
+| 분뇨 | 사람이나 가축의 대변과 소변. | history |
+| 여관 | 손님에게 잠잘 방을 제공하는 숙박업소. | history |
+| 품귀 | 물건을 구하기 어려울 만큼 수량이 모자람. | history |
+| 조림 | 산에 나무를 심는 일. 음식 조림과 구별해요. | history |
 
-## 70년대 · 청년문화
+## 1970년대
 
-미팅·음악·패션과 생활의 추억말
+해당 시기의 생활과 문화에서 쓰인 표현을 모았어요.
 
 | 단어 | 게임용 뜻 요약 | 참고 자료 |
 | --- | --- | --- |
@@ -63,10 +88,28 @@
 | 나팔바지 | 무릎 아래부터 밑단이 넓게 퍼지는 바지. | bellBottoms |
 | 정부미 | 정부가 수매·관리해 공급하던 쌀. | history |
 | 일반미 | 정부미와 구별해 민간에서 거래하던 쌀. | history |
+| 미팅 | 사람들이 친목이나 교제를 위해 만나는 모임. | dictionary2016 |
+| 포크 | 민요의 영향을 받아 발전한 대중음악. | music2015 |
+| 고고 | 빠른 리듬의 음악에 맞춰 추던 춤. | music2015 |
+| 그룹사운드 | 여럿이 악기를 연주하며 노래하는 음악 그룹. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=102119&viewType=confirm) · opendict |
+| 음악 감상실 | 음악을 듣고 즐길 수 있게 마련한 공간. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=785745&viewType=confirm) · opendict |
+| 금지곡 | 당국이 방송이나 공연 등을 금지했던 노래. | music2015 |
+| LP | 여러 곡을 담아 오래 재생할 수 있는 레코드판. | music2015 |
+| 트로트 고고 | 트로트에 고고 리듬을 결합한 대중음악. | music2015 |
+| 트로트 록 | 트로트에 록 음악의 요소를 섞은 대중음악. | music2015 |
+| 청년문화 | 청년층이 함께 만들어 누리는 생활 방식과 문화. | culture |
+| 생맥주 | 양조한 뒤 열처리하지 않은 맥주. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=352410&viewType=confirm) · music2015, opendict |
+| 공산품 | 공장에서 생산한 물품. | history |
+| 합판 | 얇은 나무판을 여러 겹 붙여 만든 판재. | history |
+| 도매 | 물건을 대량으로 사고파는 거래. | history |
+| 공해 | 산업 활동 등으로 환경이 오염되어 생기는 해로움. | history |
+| 무허가 | 관청 등의 허가를 받지 않음. | history |
+| 석유 | 땅속에서 얻는 액체 상태의 화석 연료. | history |
+| 수출 | 국내의 상품을 외국에 판매하는 일. | history |
 
-## 80년대 · 학교와 대중문화
+## 1980년대
 
-서클·학력고사·카세트와 아날로그 문화
+해당 시기의 생활과 문화에서 쓰인 표현을 모았어요.
 
 | 단어 | 게임용 뜻 요약 | 참고 자료 |
 | --- | --- | --- |
@@ -82,10 +125,28 @@
 | 에어로빅 | 음악에 맞춰 몸을 움직이는 유산소 운동. | history |
 | 오디오 | 음악 등의 소리를 녹음·재생하는 장치. | history |
 | 오빠 부대 | 남성 연예인을 열성적으로 응원하던 팬 무리. | culture |
+| 소강당 | 규모가 작은 강당. | history |
+| 연주회 | 음악을 연주해 관객에게 들려주는 모임. | history |
+| 꽃꽂이 | 꽃과 가지 등을 조화롭게 꽂아 꾸미는 일. | history |
+| 다과 | 차와 함께 내놓는 가벼운 음식. | history |
+| 서예 | 붓글씨를 아름답게 쓰는 예술. | history |
+| 문예 | 문학과 예술을 아울러 이르는 말. | history |
+| 연극제 | 여러 연극 작품을 모아 공연하는 행사. | history |
+| 합격선 | 시험에 합격할 수 있는 최소 성적의 기준. | history |
+| 대입 | 대학 입학을 줄인 말. | history |
+| 자율화 | 외부의 통제를 줄이고 스스로 결정하게 하는 일. | history |
+| 지하상가 | 지하에 여러 가게가 모여 있는 상업 공간. | history |
+| 전산망 | 컴퓨터로 정보를 처리하고 주고받는 연결 체계. | history |
+| 생수 | 마실 수 있도록 판매하는 물. | history |
+| 다큐멘터리 | 실제 사건이나 인물 등을 기록해 보여 주는 영상물. | history |
+| 예고 | 앞으로 있을 일을 미리 알리는 일. | history |
+| 극장가 | 극장이 모인 지역이나 영화 흥행 분야. | history |
+| 코미디 | 웃음을 주는 연극이나 영화, 방송 등의 장르. | history |
+| 지프 | 험한 길을 달릴 수 있게 만든 자동차를 이르는 말. | history |
 
-## 90년대 · PC통신
+## 1990년대
 
-방가·즐통·영퀴, 채팅방에서 쓰던 말
+해당 시기의 생활과 문화에서 쓰인 표현을 모았어요.
 
 | 단어 | 게임용 뜻 요약 | 참고 자료 |
 | --- | --- | --- |
@@ -101,10 +162,28 @@
 | 도배 | 같은 대화방에 글이나 그림을 잇달아 올리는 일. | chat1999 |
 | 잠수 | 대화 중 잠시 자리를 비우거나 응답하지 않는 상태. | chat1999 |
 | 추카 | 축하를 소리 나는 대로 바꿔 적은 표현. | chat1999 |
+| 안냐세여 | 안녕하세요를 줄이고 바꿔 적은 통신 인사. | chat1999 |
+| 마니 | 많이를 소리대로 바꾸어 적은 표현. | chat1999 |
+| 그러치 | 그렇지를 소리대로 바꾸어 적은 표현. | chat1999 |
+| 조타 | 좋다를 소리대로 바꾸어 적은 표현. | chat1999 |
+| 지송함다 | 죄송합니다를 줄이고 바꿔 적은 표현. | chat1999 |
+| 글구 | 그리고를 줄여 적은 표현. | chat1999 |
+| 젤 | 제일을 줄여 적은 표현. | chat1999 |
+| 넘 | 너무를 줄여 적은 표현. | chat1999 |
+| 잼 | 재미를 줄여 적은 표현. | chat1999 |
+| 초딩 | 통신상에서 초등학생을 가리키던 말. | chat1999 |
+| 중딩 | 통신상에서 중학생을 가리키던 말. | chat1999 |
+| 고딩 | 통신상에서 고등학생을 가리키던 말. | chat1999 |
+| 대딩 | 통신상에서 대학생을 가리키던 말. | chat1999 |
+| 직딩 | 통신상에서 직장인을 가리키던 말. | chat1999 |
+| 하2 | 영어 인사 hi를 글자와 숫자로 바꾸어 적은 말. | chat1999 |
+| 쏘리요 | 미안하다는 뜻으로 쓰던 통신 표현. | chat1999 |
+| 에블바디 | 여러분을 뜻하는 영어 everybody를 옮겨 적은 말. | chat1999 |
+| 거러취 | 그렇지를 소리대로 바꾸어 적은 통신 표현. | chat1999 |
 
-## 00년대 · 인터넷 유행어
+## 2000년대
 
-하이루·허걱·아햏햏, 초기 인터넷의 표현
+해당 시기의 생활과 문화에서 쓰인 표현을 모았어요.
 
 | 단어 | 게임용 뜻 요약 | 참고 자료 |
 | --- | --- | --- |
@@ -120,11 +199,103 @@
 | 악플 | 다른 사람을 비방하거나 험담하는 댓글. | online2005 |
 | 아햏햏 | 좋거나 황당한 기분을 말로 표현하기 어려울 때 쓰던 반응. | online2005 |
 | 얼짱 | 외모가 뛰어난 사람을 이르던 말. | yearbook2005 |
+| 웰빙 | 몸과 마음의 건강을 중요하게 여기는 생활 방식. | yearbook2005 |
+| 몸짱 | 몸매가 뛰어나거나 잘 단련된 사람. | yearbook2005 |
+| 짝퉁 | 유명 제품을 흉내 낸 가짜 물건을 이르는 말. | yearbook2005 |
+| 누리꾼 | 인터넷에서 활동하는 사람. | yearbook2005 |
+| 블로거 | 블로그에 글이나 사진 등을 올리며 활동하는 사람. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=701968&viewType=confirm) · opendict |
+| 미니홈피 | 사진이나 일상 등을 올리던 소규모 개인 홈페이지. | new2009 |
+| 홈피 | 홈페이지를 줄인 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=749199&viewType=confirm) · opendict |
+| 셀카 | 자기 모습을 스스로 찍은 사진. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=696158&viewType=confirm) · opendict |
+| 인증샷 | 어떤 일을 실제로 했음을 보여 주려고 찍은 사진. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=676221&viewType=confirm) · opendict |
+| 댓글 | 인터넷 게시물에 답하여 덧붙인 짧은 글. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=597480&viewType=confirm) · opendict |
+| 악플러 | 비방하거나 부정적인 댓글을 다는 사람. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1395023&viewType=confirm) · new2009, opendict |
+| 무단 펌질 | 허락 없이 남의 글이나 사진을 복사해 퍼뜨리는 일. | new2009 |
+| 아바타 | 가상 공간에서 나를 대신하는 캐릭터. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=663894&viewType=confirm) · opendict |
+| 메신저 | 온라인에서 메시지와 자료를 바로 주고받는 프로그램. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=617716&viewType=confirm) · opendict |
+| 훈남 | 외모나 다른 매력으로 따뜻하고 좋은 인상을 주는 남성. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=657913&viewType=confirm) · new2009, opendict |
+| 엄친아 | 엄마 친구의 아들이라는 뜻으로 여러 면에서 뛰어난 남성을 이르는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368180&viewType=confirm) · opendict |
+| 품절남 | 이미 결혼한 남성을 상품에 빗대어 이르는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=662627&viewType=confirm) · new2009, opendict |
+| 품절녀 | 이미 결혼한 여성을 상품에 빗대어 이르는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=662628&viewType=confirm) · new2009, opendict |
+
+## 2010년대
+
+해당 시기의 생활과 문화에서 쓰인 표현을 모았어요.
+
+| 단어 | 게임용 뜻 요약 | 참고 자료 |
+| --- | --- | --- |
+| 꿀잼 | 매우 재미있다는 뜻. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368125&viewType=confirm) · opendict |
+| 노잼 | 재미가 전혀 없다는 뜻. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368314&viewType=confirm) · opendict |
+| 멘붕 | 멘털 붕괴의 줄임말. 당황해 정신을 차리기 어려운 상태. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=979570&viewType=confirm) · opendict |
+| 불금 | 활기차고 즐겁게 보내는 불타는 금요일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1370760&viewType=confirm) · opendict |
+| 돌직구 | 돌려 말하지 않고 직설적으로 하는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1371200&viewType=confirm) · opendict |
+| 솔까말 | 솔직히 까놓고 말해서를 줄인 표현. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368686&viewType=confirm) · opendict |
+| 치맥 | 치킨과 맥주를 함께 이르는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368183&viewType=confirm) · opendict |
+| 썸 | 아직 연인은 아니지만 서로 호감을 갖고 가까이 지내는 관계. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368217&viewType=confirm) · opendict |
+| 금사빠 | 금방 사랑에 빠지는 사람. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368605&viewType=confirm) · opendict |
+| 먹방 | 음식을 먹는 모습을 주로 보여 주는 방송. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368962&viewType=confirm) · opendict |
+| 심쿵 | 심장이 쿵 뛸 만큼 놀라거나 설레는 느낌. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368126&viewType=confirm) · opendict |
+| 귀요미 | 귀엽고 사랑스러운 사람. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368050&viewType=confirm) · opendict |
+| 인생짤 | 오래 남기고 싶을 만큼 잘 나온 사진. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368852&viewType=confirm) · opendict |
+| 광삭 | 인터넷 게시물 등을 매우 빠르게 삭제하는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368988&viewType=confirm) · opendict |
+| 맛저 | 맛있는 저녁의 줄임말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368998&viewType=confirm) · opendict |
+| 부먹파 | 소스가 따로 나오는 음식에 소스를 부어 먹는 사람들. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1358164&viewType=confirm) · opendict |
+| 찍먹파 | 소스가 따로 나오는 음식을 소스에 찍어 먹는 사람들. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1358274&viewType=confirm) · opendict |
+| 워라밸 | 일과 개인 생활 사이의 균형. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1374326&viewType=confirm) · opendict |
+| 소확행 | 일상에서 누리는 작지만 확실한 행복. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1382344&viewType=confirm) · opendict |
+| 인싸 | 모임에 적극적으로 참여하며 사람들과 잘 어울리는 사람. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1379205&viewType=confirm) · opendict |
+| 아싸 | 무리에 잘 어울리지 않고 혼자 지내는 사람을 가리키는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368957&viewType=confirm) · opendict |
+| 뇌피셜 | 객관적 근거 없이 자기 생각만으로 하는 추측이나 주장. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1370208&viewType=confirm) · opendict |
+| 취존 | 취향 존중의 줄임말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1369951&viewType=confirm) · opendict |
+| 덕질 | 좋아하는 분야나 사람을 열정적으로 파고드는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368987&viewType=confirm) · opendict |
+| 입덕 | 어떤 분야나 사람을 열정적으로 좋아하기 시작함. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1369887&viewType=confirm) · opendict |
+| 혼밥 | 혼자 밥을 먹는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368128&viewType=confirm) · opendict |
+| 혼술 | 혼자 술을 마시는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368129&viewType=confirm) · opendict |
+| 내적 댄스 | 몸은 움직이지 않고 마음속으로 추는 춤. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1359897&viewType=confirm) · opendict |
+| 단짠단짠 | 단맛과 짠맛이 번갈아 나거나 어우러지는 맛. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1359983&viewType=confirm) · opendict |
+| 낄끼빠빠 | 낄 때 끼고 빠질 때 빠지라는 뜻. 모임에서 눈치껏 행동하라는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1368743&viewType=confirm) · opendict |
+
+## 2020년대
+
+해당 시기의 생활과 문화에서 쓰인 표현을 모았어요.
+
+| 단어 | 게임용 뜻 요약 | 참고 자료 |
+| --- | --- | --- |
+| 갓생 | 시간을 알차게 쓰며 부지런하고 모범적으로 사는 삶. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1617931&viewType=confirm) · opendict |
+| 킹받다 | 아주 화가 나거나 흥분한다는 뜻. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1595198&viewType=confirm) · opendict |
+| 억까 | 뚜렷한 이유 없이 억지로 비난하는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1570778&viewType=confirm) · opendict |
+| 억텐 | 분위기를 띄우려고 억지로 꾸민 들뜬 감정 상태. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1666928&viewType=confirm) · opendict |
+| 찐텐 | 억지로 꾸미지 않고 자연스럽게 올라온 감정 상태. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1533083&viewType=confirm) · opendict |
+| 홈트 | 집에서 간단한 기구 등을 이용해 하는 근력 운동. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1488975&viewType=confirm) · opendict |
+| 랜선 | 여기서는 실제 공간 대신 온라인상의 관계나 활동을 이르는 말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1382734&viewType=confirm) · opendict |
+| 집콕 | 외출하지 않고 집에 머무는 상태. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1480449&viewType=confirm) · opendict |
+| 집관 | 집에서 공연이나 경기를 화면으로 관람하는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1484689&viewType=confirm) · opendict |
+| 언택트 | 사람을 직접 만나지 않고 상품이나 서비스를 이용하는 방식. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1416281&viewType=confirm) · opendict |
+| 온택트 | 직접 만나지 않고 온라인에 접속해 만나는 방식. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1500221&viewType=confirm) · opendict |
+| 차박 | 여행 중 자동차에서 잠을 자고 머무는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1369683&viewType=confirm) · opendict |
+| 부캐 | 본래 모습과 다른 역할이나 성격을 부여한 캐릭터. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1585058&viewType=confirm) · opendict |
+| 본캐 | 자신의 본래 모습이나 역할을 나타내는 캐릭터. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1589436&viewType=confirm) · opendict |
+| 꾸안꾸 | 꾸민 듯 안 꾸민 듯 자연스럽게 꾸민 모습. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1425284&viewType=confirm) · opendict |
+| 영끌 | 영혼까지 끌어모은다는 뜻. 가진 자원 등을 최대한 모으는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1437582&viewType=confirm) · opendict |
+| 빚투 | 빚을 내어 마련한 돈으로 투자하는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1511466&viewType=confirm) · opendict |
+| 폰꾸 | 휴대폰을 자기 취향대로 꾸미는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1516691&viewType=confirm) · opendict |
+| 다꾸 | 여러 문구류 등을 이용해 다이어리를 꾸미는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1425724&viewType=confirm) · opendict |
+| 스불재 | 스스로 불러온 재앙. 자기 행동 때문에 일이 잘못되는 경우. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1451497&viewType=confirm) · opendict |
+| 알잘딱깔센 | 알아서 잘 딱 깔끔하고 센스 있게 처리하라는 뜻. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1577153&viewType=confirm) · opendict |
+| 산스장 | 산에 운동 기구를 갖춰 놓은 장소. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1520514&viewType=confirm) · opendict |
+| 홈카페 | 집에서 음료나 간단한 요리를 즐기며 카페 분위기를 내는 공간. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=913573&viewType=confirm) · opendict |
+| 리셀 | 구하기 어려운 상품을 사서 웃돈을 받고 다시 파는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1568755&viewType=confirm) · opendict |
+| 메타버스 | 가상 공간에서 현실과 연결된 사회·문화 활동을 하는 세계. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=617751&viewType=confirm) · opendict |
+| 숏폼 | 짧게 편집해 올리는 동영상. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1628543&viewType=confirm) · opendict |
+| 플렉스 | 자기만족이나 과시를 위해 비싼 물건을 사는 일. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1466428&viewType=confirm) · opendict |
+| 오운완 | 오늘 운동 완료. 하루에 정한 운동을 마쳤다는 표현. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1671508&viewType=confirm) · opendict |
+| 웃안웃 | 웃기지만 사정이나 처지 때문에 웃을 수만은 없다는 표현. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1666920&viewType=confirm) · opendict |
+| 점메추 | 점심 메뉴 추천의 줄임말. | [뜻·용례](https://opendict.korean.go.kr/dictionary/view?sense_no=1663697&viewType=confirm) · opendict |
 
 ## 앱에서의 사용
 
 라이어는 선택한 묶음에서 공통 단어 하나를 배정한다. 금지어는 선택한 시대별 묶음에서 중복 없이 참가자 수만큼 배정한다. 스파이는 기존 장소·직업 목록을 사용한다. 기존 일상·음식·취미 카테고리와 저장된 라운드는 계속 읽으며, 금지어의 기본 대화어 목록도 유지한다.
 
-결과 저장 후 생성자 화면에서 이번 판 단어의 뜻과 해당 참고 자료 링크를 보여 준다. 진행·판정 화면에는 뜻풀이 목록을 노출하지 않는다. 개인 카드 URL에는 기존 허용 필드만 담고 전체 묶음·뜻·출처를 추가하지 않는다. 라이어에게는 묶음 이름만, 금지어 참가자에게는 다른 사람의 금지어만 전달한다.
+결과 저장 후 생성자 화면에서 이번 판 단어의 뜻과 해당 참고 자료 링크를 보여 준다. 시작 전·진행·판정 화면에는 정답 예시나 뜻풀이 목록을 노출하지 않는다. 시작 전 선정 기준 창에는 상세 참고 문헌도 표시하지 않는다. 개인 카드 URL에는 기존 허용 필드만 담고 전체 묶음·뜻·출처를 추가하지 않는다. 라이어에게는 묶음 이름만, 금지어 참가자에게는 다른 사람의 금지어만 전달한다.
 
 이 목록은 공개된 정적 앱에 포함되므로 개발자 도구로 원본을 읽는 것을 막는 보안 기능은 아니다. 생성자 브라우저에는 기존 설계대로 전체 배정 정보가 있다. 서버 없이 같은 자리에서 수동으로 진행하는 방식은 유지한다.

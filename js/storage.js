@@ -1,6 +1,6 @@
 import { GAME_IDS, RULES_VERSION, validateNames, scoreRound } from './core.js';
-import { personalPayload } from './round.js?v=words-1';
-import { WORDS } from './data.js?v=words-1';
+import { personalPayload } from './round.js?v=words-2';
+import { WORDS } from './data.js?v=words-2';
 import { validatePayload } from './links.js';
 
 export const STORAGE_KEY = 'three-of-us:local:v1';

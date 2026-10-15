@@ -9,18 +9,23 @@ import { loadStore, saveStore } from '../js/storage.js';
 import { createQR } from '../js/qr.js';
 import { decodeMatrix } from './qr-helper.mjs';
 
-test('all five eras provide enough distinct words for eight people, with meanings and traceable sources', () => {
-  assert.deepEqual(Object.keys(ERA_PACKS), ['era60', 'era70', 'era80', 'era90', 'era00']);
+test('all seven eras provide at least thirty distinct words, with meanings and traceable sources', () => {
+  assert.deepEqual(Object.keys(ERA_PACKS), ['era60', 'era70', 'era80', 'era90', 'era00', 'era10', 'era20']);
   for (const [category, pack] of Object.entries(ERA_PACKS)) {
     const words = pack.entries.map(e => e.word);
-    assert.ok(words.length >= 8); assert.equal(new Set(words).size, words.length);
+    assert.ok(words.length >= 30); assert.equal(new Set(words).size, words.length);
     assert.deepEqual(WORDS[category].items, words);
     for (const entry of pack.entries) {
       assert.ok(entry.meaning.trim()); assert.ok(entry.sources.length);
       for (const id of entry.sources) {
         const source = WORD_SOURCES[id]; assert.ok(source?.title);
         const url = new URL(source.url); assert.equal(url.protocol, 'https:');
-        assert.ok(['www.korean.go.kr', 'www.much.go.kr', 'encykorea.aks.ac.kr'].includes(url.hostname));
+        assert.ok(['www.korean.go.kr', 'www.much.go.kr', 'encykorea.aks.ac.kr', 'opendict.korean.go.kr'].includes(url.hostname));
+      }
+      if (entry.reference) {
+        const url = new URL(entry.reference);
+        assert.equal(url.origin, 'https://opendict.korean.go.kr');
+        assert.match(url.searchParams.get('sense_no'), /^\d+$/);
       }
       assert.equal(wordDetail(category, entry.word), entry);
     }
@@ -29,6 +34,16 @@ test('all five eras provide enough distinct words for eight people, with meaning
   assert.deepEqual(new Set(ERA_WORDS.eraMixed.items), new Set(Object.values(ERA_PACKS).flatMap(p => p.entries.map(e => e.word))));
   assert.equal(wordDetail('daily', '우산'), null);
   assert.equal(wordDetail('era90', '하이루'), null);
+});
+
+test('era labels and descriptions disclose no answer candidates; modern words link to individual definitions', () => {
+  const words = ERA_WORDS.eraMixed.items;
+  assert.ok(words.length >= 210);
+  for (const pack of Object.values(ERA_WORDS)) for (const word of words) {
+    assert.ok(!pack.label.includes(word), `label contains an answer: ${word}`);
+    assert.ok(!pack.summary.includes(word), `description contains an answer: ${word}`);
+  }
+  for (const category of ['era10', 'era20']) for (const entry of ERA_PACKS[category].entries) assert.ok(entry.reference);
 });
 
 test('selected era controls liar and taboo assignments for every player count; cards keep private allowlists', () => {

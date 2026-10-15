@@ -1,5 +1,5 @@
 import { validateNames, validatePlayerCount, randomInt, randomId, shuffle, RULES_VERSION } from './core.js';
-import { GAMES, WORDS, LOCATIONS, TABOO_WORDS } from './data.js?v=words-1';
+import { GAMES, WORDS, LOCATIONS, TABOO_WORDS } from './data.js?v=words-2';
 
 export function createSession(names, game, category, seconds) {
   const players = validateNames(names);
